@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistem Manajemen Laboratorium - Monitoring Kunjungan dan Peminjaman Barang">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <title>Lab Management System</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/assets/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/assets/images/icon-192.png">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <div>
+      <h1>Lab Management System</h1>
+      <p>Monitoring Kunjungan dan Peminjaman</p>
+    </div>
+    <div class="user-info">
+      <span id="userDisplay"></span>
+      <button onclick="handleLogout()" class="btn-logout">Logout</button>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button onclick="showPage('dashboard')">📊 Dashboard</button>
+  <button onclick="showPage('kunjungan')">👥 Kunjungan</button>
+  <button onclick="showPage('peminjaman')">📦 Peminjaman</button>
+  <button onclick="showPage('barang')" id="btnBarang" style="display:none;">🏷️ Barang</button>
+  <button onclick="showPage('laporan')" id="btnLaporan" style="display:none;">📄 Laporan</button>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="page active">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-info">
+        <h3 id="statTotalKunjungan">0</h3>
+        <p>Total Kunjungan</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-info">
+        <h3 id="statTotalPeminjaman">0</h3>
+        <p>Total Peminjaman</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-info">
+        <h3 id="statPeminjamanAktif">0</h3>
+        <p>Peminjaman Aktif</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">🏷️</div>
+      <div class="stat-info">
+        <h3 id="statTotalBarang">0</h3>
+        <p>Total Barang</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-info">
+        <h3 id="statStokRendah">0</h3>
+        <p>Stok Rendah</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">📅</div>
+      <div class="stat-info">
+        <h3 id="statKunjunganHariIni">0</h3>
+        <p>Kunjungan Hari Ini</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card" style="margin-top: 20px;">
+    <h2>📈 Top 5 Barang Paling Sering Dipinjam</h2>
+    <div id="topBarangChart"></div>
+  </div>
+</section>
+
+<!-- KUNJUNGAN -->
+<section id="kunjungan" class="page">
+  <div class="card">
+    <h2>👥 Data Kunjungan</h2>
+
+    <div class="form">
+      <input id="namaGuruK" placeholder="Nama Guru" autocomplete="off">
+      <input id="kelasDiajarK" placeholder="Kelas yang Diajar" autocomplete="off">
+      <input id="jamMulaiK" type="time" placeholder="Jam Mulai">
+      <input id="jamSelesaiK" type="time" placeholder="Jam Selesai">
+      <input id="tanggalK" type="date">
+      <button onclick="tambahKunjungan()" id="btnSubmitKunjungan">➕ Tambah</button>
+      <button onclick="cancelEditKunjungan()" id="btnCancelEditK" style="display:none; background:#95a5a6;">❌ Batal</button>
+    </div>
+    
+    <div class="search-box">
+      <input 
+        id="searchKunjungan" 
+        placeholder="🔍 Cari nama guru atau kelas..." 
+        onkeyup="searchKunjungan()"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama Guru</th>
+            <th>Kelas Diajar</th>
+            <th>Tanggal</th>
+            <th>Jam Mulai</th>
+            <th>Jam Selesai</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tableKunjungan"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- PEMINJAMAN -->
+<section id="peminjaman" class="page">
+  <div class="card">
+    <h2>📦 Data Peminjaman</h2>
+
+    <div class="form">
+      <input id="namaP" placeholder="Nama" autocomplete="off">
+      <select id="barangP">
+        <option value="">Pilih Barang</option>
+      </select>
+      <input id="jumlahP" placeholder="Jumlah" type="number" min="1">
+      <input id="tanggalP" type="date">
+      <button onclick="tambahPeminjaman()">➕ Tambah</button>
+    </div>
+    
+    <div class="filter-box">
+      <input 
+        id="searchPeminjaman" 
+        placeholder="🔍 Cari nama atau barang..." 
+        onkeyup="searchPeminjaman()"
+        autocomplete="off"
+      >
+      <select id="filterStatus" onchange="searchPeminjaman()">
+        <option value="">Semua Status</option>
+        <option value="dipinjam">Dipinjam</option>
+        <option value="kembali">Kembali</option>
+      </select>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Barang</th>
+            <th>Tanggal Pinjam</th>
+            <th>Jumlah</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tablePeminjaman"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- BARANG -->
+<section id="barang" class="page">
+  <div class="card">
+    <h2>🏷️ Data Barang</h2>
+
+    <div class="form" id="formBarang">
+      <input id="namaBarang" placeholder="Nama Barang" autocomplete="off">
+      <input id="kodeBarang" placeholder="Kode Barang" autocomplete="off">
+      <input id="stokBarang" placeholder="Stok" type="number" min="0">
+      <button onclick="tambahBarang()" id="btnSubmitBarang">➕ Tambah</button>
+      <button onclick="cancelEditBarang()" id="btnCancelEdit" style="display:none; background:#95a5a6;">❌ Batal</button>
+    </div>
+    
+    <div class="search-box">
+      <input 
+        id="searchBarang" 
+        placeholder="🔍 Cari nama atau kode barang..." 
+        onkeyup="searchBarang()"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Kode</th>
+            <th>Stok</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tableBarang"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- LAPORAN -->
+<section id="laporan" class="page">
+  <div class="card">
+    <h2>📄 Laporan</h2>
+    
+    <div class="report-buttons">
+      <button onclick="exportKunjungan()">📥 Export Kunjungan (CSV)</button>
+      <button onclick="exportPeminjaman()">📥 Export Peminjaman (CSV)</button>
+      <button onclick="exportBarang()">📥 Export Barang (CSV)</button>
+      <button onclick="printReport()">🖨️ Print Laporan</button>
+    </div>
+    
+    <div id="reportPreview" class="report-preview"></div>
+  </div>
+</section>
+
+</main>
+
+<div id="loadingOverlay" class="loading-overlay" style="display:none;">
+  <div class="spinner"></div>
+</div>
+
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/app.js"></script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('✓ Service Worker registered:', registration);
+        })
+        .catch(error => {
+          console.log('✗ Service Worker registration failed:', error);
+        });
+    });
+  }
+</script>
+</body>
+</html>

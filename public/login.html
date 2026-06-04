@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - Lab Management System</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <style>
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .login-box {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .login-box h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    
+    .login-box p {
+      text-align: center;
+      color: #7f8c8d;
+      margin-bottom: 30px;
+    }
+    
+    .login-form input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .login-form input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+    }
+    
+    .login-form button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .login-form button:hover {
+      background: #5568d3;
+    }
+    
+    .login-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      font-size: 13px;
+      color: #495057;
+    }
+    
+    .login-info strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <h1>🔐 Lab Management System</h1>
+      <p>Silakan login untuk melanjutkan</p>
+      
+      <form class="login-form" onsubmit="handleLogin(event)">
+        <input 
+          type="text" 
+          id="username" 
+          placeholder="Username" 
+          required 
+          autocomplete="username"
+        >
+        <input 
+          type="password" 
+          id="password" 
+          placeholder="Password" 
+          required 
+          autocomplete="current-password"
+        >
+        <button type="submit">Login</button>
+      </form>
+      
+      <div class="login-info">
+        <strong>📝 Catatan:</strong>
+        <div>Gunakan akun yang telah terdaftar untuk login</div>
+        <div>Hubungi administrator jika lupa password</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/js/config.js"></script>
+  <script>
+    // Check if already logged in
+    if (localStorage.getItem('token')) {
+      window.location.href = '/dashboard.html';
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = '/dashboard.html';
+        } else {
+          alert(data.error || 'Login gagal');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('Terjadi kesalahan saat login');
+      }
+    }
+  </script>
+</body>
+</html>
