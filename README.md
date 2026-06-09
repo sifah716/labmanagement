@@ -157,22 +157,22 @@ labmagement/
 **Akses untuk:** User biasa (non-admin)
 
 **Fitur yang tersedia:**
-- ✅ Statistik dasar (Total Kunjungan, Total Peminjaman, Peminjaman Aktif, Kunjungan Hari Ini)
-- ✅ Manajemen Kunjungan (Tambah, Edit, Hapus sendiri)
-- ✅ Manajemen Peminjaman (Tambah, Tandai kembali)
-- ❌ Manajemen Barang (tidak ada akses)
-- ❌ Laporan & Export (tidak ada akses)
+-  Statistik dasar (Total Kunjungan, Total Peminjaman, Peminjaman Aktif, Kunjungan Hari Ini)
+-  Manajemen Kunjungan (Tambah, Edit, Hapus sendiri)
+-  Manajemen Peminjaman (Tambah, Tandai kembali)
+-  Manajemen Barang (tidak ada akses)
+-  Laporan & Export (tidak ada akses)
 
 ### Dashboard Admin (`/pages/admin/dashboard.html`)
 **Akses untuk:** Administrator
 
 **Fitur yang tersedia:**
-- ✅ Statistik lengkap (6 stat: Total Kunjungan, Peminjaman, Peminjaman Aktif, Total Barang, Stok Rendah, Kunjungan Hari Ini)
-- ✅ Top 5 Barang Paling Sering Dipinjam (chart)
-- ✅ Manajemen Kunjungan (CRUD lengkap)
-- ✅ Manajemen Peminjaman (CRUD lengkap)
-- ✅ Manajemen Barang (CRUD: Tambah, Edit, Hapus barang)
-- ✅ Laporan & Export (Export CSV, Print laporan)
+-  Statistik lengkap (6 stat: Total Kunjungan, Peminjaman, Peminjaman Aktif, Total Barang, Stok Rendah, Kunjungan Hari Ini)
+-  Top 5 Barang Paling Sering Dipinjam (chart)
+-  Manajemen Kunjungan (CRUD lengkap)
+-  Manajemen Peminjaman (CRUD lengkap)
+-  Manajemen Barang (CRUD: Tambah, Edit, Hapus barang)
+-  Laporan & Export (Export CSV, Print laporan)
 
 ## Troubleshooting Singkat
 

@@ -1,145 +1,279 @@
-# Contributing to Lab Management System
+# Panduan Kontribusi - Lab Management System
 
-Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
+Terima kasih sudah tertarik berkontribusi! Dokumen ini menjelaskan bagaimana Anda bisa membantu mengembangkan proyek ini.
 
-## How to Contribute
+## Cara Berkontribusi
 
-### Reporting Bugs
+### Melaporkan Bug
 
-1. Check if the bug has already been reported in Issues
-2. If not, create a new issue with:
-   - Clear title and description
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Screenshots (if applicable)
-   - Environment details (OS, Node version, etc.)
+Jika Anda menemukan bug, ikuti langkah berikut:
 
-### Suggesting Features
+1. **Cek Issue yang sudah ada** di [Issues](../../issues) agar tidak duplikat
+2. **Buat Issue baru** jika belum ada dengan informasi:
+   - **Judul**: Deskripsi singkat bug (contoh: "Login gagal dengan username khusus")
+   - **Deskripsi**: Penjelasan detail tentang bug
+   - **Langkah Reproduksi**: Step-by-step cara mereproduksi bug
+     ```
+     1. Login dengan akun user
+     2. Klik menu Barang
+     3. Bug terjadi: ...
+     ```
+   - **Perilaku Diharapkan**: Apa yang seharusnya terjadi
+   - **Perilaku Aktual**: Apa yang benar-benar terjadi
+   - **Screenshot/Video**: Jika memungkinkan, lampirkan bukti visual
+   - **Lingkungan**: OS, Node.js version, browser
 
-1. Check if the feature has been suggested
-2. Create a new issue with:
-   - Clear description of the feature
-   - Use cases and benefits
-   - Possible implementation approach
+### Menyarankan Fitur Baru
 
-### Pull Requests
+Idea fitur baru sangat diterima! Silakan:
 
-1. Fork the repository
-2. Create a new branch:
+1. **Cek Issue yang sudah ada** untuk memastikan fitur belum disarankan
+2. **Buat Issue baru** dengan template:
+   - **Judul**: Nama fitur singkat (contoh: "Fitur Export Excel untuk Laporan")
+   - **Deskripsi**: Penjelasan detail tentang fitur
+   - **Use Cases**: Kapan dan mengapa fitur ini berguna
+   - **Implementasi Yang Mungkin**: Ide teknis cara implementasinya (opsional)
+
+### Pull Requests (Kontribusi Kode)
+
+**Proses kontribusi kode:**
+
+1. **Fork repository** ke akun GitHub Anda
    ```bash
-   git checkout -b feature/your-feature-name
+   # Klik tombol "Fork" di halaman repository
    ```
 
-3. Make your changes:
-   - Follow the existing code style
-   - Add comments for complex logic
-   - Update documentation if needed
-   - Test your changes thoroughly
-
-4. Commit your changes:
+2. **Clone fork Anda** ke komputer lokal
    ```bash
-   git commit -m "Add: brief description of changes"
-   ```
-   
-   Use conventional commit messages:
-   - `Add:` for new features
-   - `Fix:` for bug fixes
-   - `Update:` for updates to existing features
-   - `Refactor:` for code refactoring
-   - `Docs:` for documentation changes
-   - `Style:` for formatting changes
-   - `Test:` for test-related changes
-
-5. Push to your fork:
-   ```bash
-   git push origin feature/your-feature-name
+   git clone https://github.com/YOUR_USERNAME/labmanagement.git
+   cd labmanagement
    ```
 
-6. Create a Pull Request:
-   - Provide a clear title and description
-   - Reference any related issues
-   - Include screenshots for UI changes
-
-## Development Setup
-
-1. Clone the repository:
+3. **Buat branch baru** dengan nama deskriptif
    ```bash
-   git clone https://github.com/yourusername/labmagementdkv.git
-   cd labmagementdkv
+   # Format: feature/nama-fitur atau fix/nama-bug
+   git checkout -b feature/tambah-export-excel
+   # atau
+   git checkout -b fix/login-gagal-email
    ```
 
-2. Install dependencies:
+4. **Buat perubahan** dengan mengikuti pedoman code style
+   -  Ikuti gaya kode yang sudah ada
+   -  Tambah komentar untuk logic kompleks
+   -  Update dokumentasi jika ada API/fitur baru
+   -  Test perubahan Anda secara menyeluruh
+   -  Pastikan tidak ada console error
+
+5. **Commit dengan pesan yang jelas** (Conventional Commits)
+   ```bash
+   git commit -m "Add: export laporan dalam format Excel"
+   ```
+
+   **Format commit message:**
+   | Prefix | Gunakan Untuk | Contoh |
+   |--------|---------------|--------|
+   | `Add:` | Fitur baru | `Add: fitur filter barang berdasarkan kategori` |
+   | `Fix:` | Bug fix | `Fix: login tidak berfungsi dengan email` |
+   | `Update:` | Perubahan existing | `Update: improve UI dashboard` |
+   | `Refactor:` | Refactoring code | `Refactor: reorganize auth middleware` |
+   | `Docs:` | Dokumentasi | `Docs: update README instalasi` |
+   | `Style:` | Format/spacing | `Style: fix indentation di app.js` |
+   | `Test:` | Test-related | `Test: add unit test untuk login` |
+
+6. **Push ke fork Anda**
+   ```bash
+   git push origin feature/tambah-export-excel
+   ```
+
+7. **Buat Pull Request** dengan template yang jelas
+   - **Judul**: Ringkas perubahan (gunakan prefix yang sama seperti commit)
+   - **Deskripsi**: Jelaskan apa yang diubah dan mengapa
+   - **Link Issue**: Reference issue terkait (contoh: "Fixes #123")
+   - **Screenshot**: Jika ada perubahan UI
+   - **Checklist**:
+     ```
+     - [ ] Kode sudah ditest
+     - [ ] Tidak ada console error
+     - [ ] Dokumentasi sudah diupdate
+     - [ ] Commit message mengikuti conventional commits
+     ```
+
+**Tips Pull Request yang Bagus:**
+- Satu PR satu fitur/fix (jangan campur-campur)
+- PR description yang detail membantu reviewer
+- Respond to feedback dengan profesional
+- Jangan push langsung ke main branch (selalu buat branch baru)
+
+## Setup Development Environment
+
+**Prerequisites:**
+- Git sudah terinstall
+- Node.js v16+ dan npm
+- Code editor (VS Code recommended)
+- Basic Git knowledge
+
+### Setup Step-by-Step:
+
+1. **Clone repository ke komputer Anda**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/labmanagement.git
+   cd labmanagement
+   ```
+
+2. **Install semua dependencies**
    ```bash
    npm install
    ```
 
-3. Create `.env` file:
+3. **Setup environment variables**
    ```bash
+   # Copy file template
    cp .env.example .env
+   
+   # Edit .env dengan text editor
+   # FILE: .env
+   PRIVATE_KEY=test_private_key_dev
+   JWT_SECRET=test_jwt_secret_dev
+   NODE_ENV=development
+   PORT=3000
    ```
 
-4. Run in development mode:
+4. **Jalankan server di development mode**
    ```bash
-   npm run dev
+   npm start
    ```
 
-## Code Style Guidelines
+5. **Akses aplikasi**
+   ```
+   Browser: http://localhost:3000/pages/auth/login.html
+   API: http://localhost:3000/api/
+   ```
 
-### JavaScript
-- Use ES6+ features
-- Use `const` and `let`, avoid `var`
-- Use arrow functions where appropriate
-- Use template literals for strings
-- Add JSDoc comments for functions
-- Keep functions small and focused
+## Panduan Code Style
 
-### HTML
-- Use semantic HTML5 elements
-- Proper indentation (2 spaces)
-- Add ARIA labels for accessibility
+### JavaScript Conventions
 
-### CSS
-- Use BEM naming convention
-- Mobile-first approach
-- Use CSS variables for colors
-- Group related properties
+```javascript
+// ✅ BENAR
+const userName = 'John';                  // const untuk immutable
+let counter = 0;                          // let untuk mutable
+const greet = (name) => `Hi ${name}`;     // Arrow function, template literal
 
-### Database
-- Use parameterized queries
-- Add proper indexes
-- Document schema changes
+/**
+ * Menghitung total harga dengan pajak
+ * @param {number} price - Harga barang
+ * @param {number} tax - Persen pajak (default 10%)
+ * @returns {number} Total harga
+ */
+const calculateTotal = (price, tax = 0.1) => {
+  return price * (1 + tax);
+};
 
-## Testing
+// ❌ JANGAN
+var userName = 'John';                    // Avoid var
+function greet(name) {                    // Gunakan arrow function
+  return 'Hi ' + name;                    // Gunakan template literal
+}
+```
 
-Before submitting a PR:
-1. Test all functionality manually
-2. Test on different browsers
-3. Test responsive design
-4. Check for console errors
-5. Verify no breaking changes
+**Rules:**
+- Gunakan `const` by default, `let` jika perlu reassign, hindari `var`
+- Gunakan arrow functions `() => {}`
+- Gunakan template literals: `` `Hello ${name}` ``
+- Add JSDoc comments untuk semua functions
+- Keep functions small (max 20 lines)
+- Meaningful variable names
+- Comments untuk logic kompleks
 
-## Documentation
+### HTML Conventions
 
-Update documentation when:
-- Adding new features
-- Changing API endpoints
-- Modifying configuration
-- Updating dependencies
+```html
+<!-- ✅ BENAR -->
+<section id="dashboard" class="page active" role="main">
+  <article class="card">
+    <h2>Data Kunjungan</h2>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Nama</th>
+          <th scope="col">Tanggal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>John Doe</td>
+          <td>2024-01-15</td>
+        </tr>
+      </tbody>
+    </table>
+  </article>
+</section>
 
-## Questions?
+<!-- ❌ JANGAN -->
+<div class="dashboard">
+  <div class="card">
+    <b>Data Kunjungan</b>
+  </div>
+</div>
+```
 
-Feel free to:
-- Open an issue for questions
-- Join our discussions
-- Contact the maintainers
+**Rules:**
+- Gunakan semantic HTML5: `<section>`, `<article>`, `<nav>`, `<header>`
+- Indentation 2 spaces
+- Add `role` attributes untuk accessibility
+- `id` untuk unique elements, `class` untuk styling
 
-## Code of Conduct
+### CSS/Styling
 
-- Be respectful and inclusive
-- Welcome newcomers
-- Focus on constructive feedback
-- Help others learn and grow
+```css
+/* ✅ BENAR */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}
 
-## License
+/* Responsive design */
+@media (max-width: 768px) {
+  .card {
+    padding: 10px;
+  }
+}
+```
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+## Testing Sebelum Submit PR
+
+```bash
+# 1. Manual testing
+- Buka browser, test fitur yang diubah
+- Test di mobile (F12 -> Device Emulation)
+- Check console untuk error
+
+# 2. Accessibility check
+- Tab navigation berfungsi?
+- Color contrast cukup?
+```
+
+## Code Review Process
+
+Saat PR Anda di-review:
+
+1. **Reviewer akan:**
+   - Check code quality
+   - Verify testing
+   - Suggest improvements
+
+2. **Anda akan:**
+   - Respond to comments
+   - Make requested changes
+   - Mark conversations resolved
+
+**Tips:**
+- Jangan defensive terhadap feedback
+- Ask for clarification jika tidak mengerti
+- Thank reviewers untuk feedback
+
+---
+
+**Terima kasih sudah berkontribusi! 🚀**
