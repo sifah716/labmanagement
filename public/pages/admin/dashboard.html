@@ -1,14 +1,30 @@
+<!-- 
+  ===================================
+  ADMIN DASHBOARD
+  ===================================
+  Halaman dashboard untuk Administrator
+  Path: /pages/admin/dashboard.html
+  Akses: Admin saja (full access)
+  
+  FITUR YANG TERSEDIA (ADMIN ONLY):
+  ✅ Dashboard - Statistik lengkap + Top barang
+  ✅ Kunjungan - Manajemen data kunjungan
+  ✅ Peminjaman - Manajemen data peminjaman
+  ✅ Barang - Manajemen inventori barang
+  ✅ Laporan - Export dan cetak laporan
+  -->
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sistem Manajemen Laboratorium - Monitoring Kunjungan dan Peminjaman Barang">
+  <meta name="description" content="Sistem Manajemen Laboratorium - Dashboard Admin">
   <meta name="theme-color" content="#667eea">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Lab Management System</title>
+  <title>Dashboard Admin - Lab Management System</title>
   
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
@@ -26,7 +42,7 @@
   <div class="header-content">
     <div>
       <h1>Lab Management System</h1>
-      <p>Monitoring Kunjungan dan Peminjaman</p>
+      <p>Dashboard Admin - Manajemen Lengkap</p>
     </div>
     <div class="user-info">
       <span id="userDisplay"></span>
@@ -35,17 +51,18 @@
   </div>
 </header>
 
+<!-- NAVIGASI ADMIN: Semua fitur termasuk admin features -->
 <nav>
   <button onclick="showPage('dashboard')">📊 Dashboard</button>
   <button onclick="showPage('kunjungan')">👥 Kunjungan</button>
   <button onclick="showPage('peminjaman')">📦 Peminjaman</button>
-  <button onclick="showPage('barang')" id="btnBarang" style="display:none;">🏷️ Barang</button>
-  <button onclick="showPage('laporan')" id="btnLaporan" style="display:none;">📄 Laporan</button>
+  <button onclick="showPage('barang')">🏷️ Barang</button>
+  <button onclick="showPage('laporan')">📄 Laporan</button>
 </nav>
 
 <main>
 
-<!-- DASHBOARD -->
+<!-- DASHBOARD - Statistik Lengkap untuk Admin -->
 <section id="dashboard" class="page active">
   <div class="stats-grid">
     <div class="stat-card">
@@ -103,7 +120,7 @@
   </div>
 </section>
 
-<!-- KUNJUNGAN -->
+<!-- KUNJUNGAN - Manajemen Data Kunjungan -->
 <section id="kunjungan" class="page">
   <div class="card">
     <h2>👥 Data Kunjungan</h2>
@@ -145,7 +162,7 @@
   </div>
 </section>
 
-<!-- PEMINJAMAN -->
+<!-- PEMINJAMAN - Manajemen Data Peminjaman -->
 <section id="peminjaman" class="page">
   <div class="card">
     <h2>📦 Data Peminjaman</h2>
@@ -192,7 +209,7 @@
   </div>
 </section>
 
-<!-- BARANG -->
+<!-- BARANG - Manajemen Inventori Barang (ADMIN ONLY) -->
 <section id="barang" class="page">
   <div class="card">
     <h2>🏷️ Data Barang</h2>
@@ -230,7 +247,7 @@
   </div>
 </section>
 
-<!-- LAPORAN -->
+<!-- LAPORAN - Export dan Cetak Laporan (ADMIN ONLY) -->
 <section id="laporan" class="page">
   <div class="card">
     <h2>📄 Laporan</h2>

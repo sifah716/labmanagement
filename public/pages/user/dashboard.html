@@ -1,14 +1,32 @@
+<!-- 
+  ===================================
+  USER DASHBOARD
+  ===================================
+  Halaman dashboard untuk User (Regular/Non-Admin)
+  Path: /pages/user/dashboard.html
+  Akses: User biasa (tidak memiliki akses admin)
+  
+  FITUR YANG TERSEDIA:
+  ✅ Dashboard - Statistik umum
+  ✅ Kunjungan - Lihat dan catat kunjungan
+  ✅ Peminjaman - Lihat dan catat peminjaman barang
+  
+  FITUR YANG TIDAK TERSEDIA (ADMIN ONLY):
+  ❌ Barang - Manajemen data barang
+  ❌ Laporan - Export dan cetak laporan
+  -->
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sistem Manajemen Laboratorium - Monitoring Kunjungan dan Peminjaman Barang">
+  <meta name="description" content="Sistem Manajemen Laboratorium - Dashboard User">
   <meta name="theme-color" content="#667eea">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Lab Management System</title>
+  <title>Dashboard User - Lab Management System</title>
   
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
@@ -26,7 +44,7 @@
   <div class="header-content">
     <div>
       <h1>Lab Management System</h1>
-      <p>Monitoring Kunjungan dan Peminjaman</p>
+      <p>Dashboard User - Monitoring Kunjungan dan Peminjaman</p>
     </div>
     <div class="user-info">
       <span id="userDisplay"></span>
@@ -35,17 +53,16 @@
   </div>
 </header>
 
+<!-- NAVIGASI USER: Hanya fitur dasar tanpa menu admin -->
 <nav>
   <button onclick="showPage('dashboard')">📊 Dashboard</button>
   <button onclick="showPage('kunjungan')">👥 Kunjungan</button>
   <button onclick="showPage('peminjaman')">📦 Peminjaman</button>
-  <button onclick="showPage('barang')" id="btnBarang" style="display:none;">🏷️ Barang</button>
-  <button onclick="showPage('laporan')" id="btnLaporan" style="display:none;">📄 Laporan</button>
 </nav>
 
 <main>
 
-<!-- DASHBOARD -->
+<!-- DASHBOARD - Statistik Umum -->
 <section id="dashboard" class="page active">
   <div class="stats-grid">
     <div class="stat-card">
@@ -73,22 +90,6 @@
     </div>
     
     <div class="stat-card">
-      <div class="stat-icon">🏷️</div>
-      <div class="stat-info">
-        <h3 id="statTotalBarang">0</h3>
-        <p>Total Barang</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">⚠️</div>
-      <div class="stat-info">
-        <h3 id="statStokRendah">0</h3>
-        <p>Stok Rendah</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
       <div class="stat-icon">📅</div>
       <div class="stat-info">
         <h3 id="statKunjunganHariIni">0</h3>
@@ -103,7 +104,7 @@
   </div>
 </section>
 
-<!-- KUNJUNGAN -->
+<!-- KUNJUNGAN - Manajemen Data Kunjungan -->
 <section id="kunjungan" class="page">
   <div class="card">
     <h2>👥 Data Kunjungan</h2>
@@ -145,7 +146,7 @@
   </div>
 </section>
 
-<!-- PEMINJAMAN -->
+<!-- PEMINJAMAN - Manajemen Data Peminjaman -->
 <section id="peminjaman" class="page">
   <div class="card">
     <h2>📦 Data Peminjaman</h2>
@@ -189,60 +190,6 @@
         <tbody id="tablePeminjaman"></tbody>
       </table>
     </div>
-  </div>
-</section>
-
-<!-- BARANG -->
-<section id="barang" class="page">
-  <div class="card">
-    <h2>🏷️ Data Barang</h2>
-
-    <div class="form" id="formBarang">
-      <input id="namaBarang" placeholder="Nama Barang" autocomplete="off">
-      <input id="kodeBarang" placeholder="Kode Barang" autocomplete="off">
-      <input id="stokBarang" placeholder="Stok" type="number" min="0">
-      <button onclick="tambahBarang()" id="btnSubmitBarang">➕ Tambah</button>
-      <button onclick="cancelEditBarang()" id="btnCancelEdit" style="display:none; background:#95a5a6;">❌ Batal</button>
-    </div>
-    
-    <div class="search-box">
-      <input 
-        id="searchBarang" 
-        placeholder="🔍 Cari nama atau kode barang..." 
-        onkeyup="searchBarang()"
-        autocomplete="off"
-      >
-    </div>
-
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Nama</th>
-            <th>Kode</th>
-            <th>Stok</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="tableBarang"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- LAPORAN -->
-<section id="laporan" class="page">
-  <div class="card">
-    <h2>📄 Laporan</h2>
-    
-    <div class="report-buttons">
-      <button onclick="exportKunjungan()">📥 Export Kunjungan (CSV)</button>
-      <button onclick="exportPeminjaman()">📥 Export Peminjaman (CSV)</button>
-      <button onclick="exportBarang()">📥 Export Barang (CSV)</button>
-      <button onclick="printReport()">🖨️ Print Laporan</button>
-    </div>
-    
-    <div id="reportPreview" class="report-preview"></div>
   </div>
 </section>
 
