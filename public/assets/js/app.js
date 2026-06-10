@@ -1348,19 +1348,26 @@ function toggleNotifications() {
     const rect = userInfo.getBoundingClientRect();
     dd.style.position = 'fixed';
     dd.style.top = (rect.bottom + 8) + 'px';
-    dd.style.left = rect.left + 'px';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
     dd.classList.add('show');
     loadNotifications();
     markNotifRead();
   } else {
     dd.classList.remove('show');
+    dd.style.position = '';
+    dd.style.top = '';
+    dd.style.right = '';
   }
 }
 
 // Click outside to close
 document.addEventListener('click', function(e) {
   if (notifOpen && !e.target.closest('#notifBtn')) {
-    document.getElementById('notifDropdown').classList.remove('show');
+    const dd = document.getElementById('notifDropdown');
+    dd.classList.remove('show');
+    dd.style.position = '';
+    dd.style.top = '';
+    dd.style.right = '';
     notifOpen = false;
   }
 });
@@ -1368,7 +1375,11 @@ document.addEventListener('click', function(e) {
 // Close on scroll
 document.addEventListener('scroll', function() {
   if (notifOpen) {
-    document.getElementById('notifDropdown').classList.remove('show');
+    const dd = document.getElementById('notifDropdown');
+    dd.classList.remove('show');
+    dd.style.position = '';
+    dd.style.top = '';
+    dd.style.right = '';
     notifOpen = false;
   }
 }, { passive: true });

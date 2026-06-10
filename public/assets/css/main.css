@@ -1461,7 +1461,7 @@ tr:hover td {
   .announcement-card, .info-card, .tips-card { padding: 20px; }
   .login-box, .auth-box { padding: 28px 24px; }
 
-  .notif-dropdown { width: calc(100vw - 32px); max-width: 360px; right: 16px !important; }
+  .notif-dropdown { width: calc(100vw - 32px); max-width: 360px; }
 }
 
 @media (max-width: 480px) {
