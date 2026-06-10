@@ -1344,12 +1344,11 @@ function toggleNotifications() {
   notifOpen = !notifOpen;
   
   if (notifOpen) {
-    // Position dropdown relative to viewport
-    const btn = document.getElementById('notifBtn');
-    const rect = btn.getBoundingClientRect();
+    const userInfo = document.querySelector('.user-info');
+    const rect = userInfo.getBoundingClientRect();
     dd.style.position = 'fixed';
     dd.style.top = (rect.bottom + 8) + 'px';
-    dd.style.right = (window.innerWidth - rect.right) + 'px';
+    dd.style.left = rect.left + 'px';
     dd.classList.add('show');
     loadNotifications();
     markNotifRead();
