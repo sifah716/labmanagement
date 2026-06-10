@@ -42,7 +42,7 @@ async function handleLogout() {
   if (!confirm('Yakin ingin logout?')) return;
   
   try {
-    await fetchAPI('/logout', { method: 'POST' });
+    await fetchAPI('/auth/logout', { method: 'POST' });
   } catch (error) {
     console.error('Logout error:', error);
   }
