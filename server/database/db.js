@@ -113,15 +113,10 @@ function initDatabase() {
 
     // Seed default announcement
     const now = new Date().toISOString();
-    db.run(
-      "INSERT OR IGNORE INTO announcements (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
-      [
-        "Selamat Datang di Sistem Manajemen Lab",
-        "Gunakan menu Kunjungan untuk mencatat kunjungan mengajar Anda di laboratorium. Gunakan menu Peminjaman untuk meminjam peralatan laboratorium.",
-        now,
-        now
-      ]
-    );
+db.run(
+  "INSERT OR IGNORE INTO announcements (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
+  [ "Selamat Datang di Sistem Manajemen Lab", "...", now, now ]
+);
 
     // Seed data untuk barang
     const barangItems = [
@@ -137,13 +132,7 @@ function initDatabase() {
       { nama: "Keyboard", kode: "KEY001", stok: 10 }
     ];
 
-    const now = new Date().toISOString();
-    barangItems.forEach(item => {
-      db.run(
-        "INSERT OR IGNORE INTO barang (nama, kode, stok, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-        [item.nama, item.kode, item.stok, now, now]
-      );
-    });
+    
   });
 }
 
