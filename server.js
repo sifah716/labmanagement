@@ -11,6 +11,7 @@ const barangRoutes = require('./server/routes/barang');
 const kunjunganRoutes = require('./server/routes/kunjungan');
 const peminjamanRoutes = require('./server/routes/peminjaman');
 const statsRoutes = require('./server/routes/stats');
+const announcementsRoutes = require('./server/routes/announcements');
 
 const app = express();
 
@@ -29,13 +30,7 @@ app.use('/barang', barangRoutes);
 app.use('/kunjungan', kunjunganRoutes);
 app.use('/peminjaman', peminjamanRoutes);
 app.use('/stats', statsRoutes);
-
-// For backward compatibility, mount auth routes at root level too
-app.post("/login", authRoutes);
-app.post("/logout", authRoutes);
-app.get("/me", authRoutes);
-app.get("/health", authRoutes);
-app.get("/debug/users", authRoutes);
+app.use('/announcements', announcementsRoutes);
 
 // ============ ERROR HANDLING ============
 // 404 handler

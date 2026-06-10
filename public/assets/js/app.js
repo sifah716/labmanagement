@@ -22,13 +22,17 @@ function checkAuth() {
   document.getElementById('userDisplay').textContent = 
     `${currentUser.role === 'admin' ? '👑' : '👤'} ${currentUser.username}`;
   
-  // Show/hide menu based on role
+  // Show/hide menu based on role (check if elements exist first)
   if (currentUser.role === 'admin') {
-    document.getElementById('btnBarang').style.display = 'inline-block';
-    document.getElementById('btnLaporan').style.display = 'inline-block';
+    const btnBarang = document.getElementById('btnBarang');
+    const btnLaporan = document.getElementById('btnLaporan');
+    if (btnBarang) btnBarang.style.display = 'inline-block';
+    if (btnLaporan) btnLaporan.style.display = 'inline-block';
   } else {
-    document.getElementById('btnBarang').style.display = 'none';
-    document.getElementById('btnLaporan').style.display = 'none';
+    const btnBarang = document.getElementById('btnBarang');
+    const btnLaporan = document.getElementById('btnLaporan');
+    if (btnBarang) btnBarang.style.display = 'none';
+    if (btnLaporan) btnLaporan.style.display = 'none';
   }
   
   return true;
@@ -137,6 +141,7 @@ function showPage(id) {
   if (id === 'kunjungan') loadKunjungan();
   if (id === 'peminjaman') loadPeminjaman();
   if (id === 'barang') loadBarang();
+  if (id === 'pengumuman') loadPengumuman();
 }
 
 // ============ DASHBOARD ============
@@ -179,40 +184,89 @@ async function loadDashboard() {
         chartDiv.innerHTML = '<p style="text-align:center; color:#7f8c8d;">Belum ada data peminjaman</p>';
       }
     } else {
-      // User: Tampilkan informasi/pengumuman
-      document.getElementById('dashboard').innerHTML = `
-        <h2>📋 Dashboard</h2>
-        <div class="info-section">
-          <div class="announcement-card">
-            <h3>📢 Pengumuman</h3>
-            <div class="announcement-item">
-              <h4>Selamat Datang di Sistem Manajemen Lab</h4>
-              <p>Gunakan menu <strong>Kunjungan</strong> untuk mencatat kunjungan mengajar Anda di laboratorium.</p>
-              <p>Gunakan menu <strong>Peminjaman</strong> untuk meminjam peralatan laboratorium.</p>
-              <small>Terakhir diperbarui: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</small>
+      // User: Tampilkan pengumuman dan informasi
+      try {
+        const announcements = await fetchAPI('/announcements');
+        let announcementHTML = '';
+        
+        if (announcements.length > 0) {
+          announcements.forEach(ann => {
+            const updatedDate = new Date(ann.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            announcementHTML += `
+              <div class="announcement-item">
+                <h4>${ann.title}</h4>
+                <p>${ann.description}</p>
+                <small>Terakhir diperbarui: ${updatedDate}</small>
+              </div>
+            `;
+          });
+        } else {
+          announcementHTML = '<div class="announcement-item"><p>Tidak ada pengumuman saat ini</p></div>';
+        }
+        
+        document.getElementById('dashboard').innerHTML = `
+          <h2>📋 Dashboard</h2>
+          <div class="info-section">
+            <div class="announcement-card">
+              <h3>📢 Pengumuman</h3>
+              ${announcementHTML}
+            </div>
+            
+            <div class="info-card">
+              <h3>ℹ️ Informasi Penting</h3>
+              <ul class="info-list">
+                <li>✓ Pastikan mengisi form kunjungan setiap kali mengajar di lab</li>
+                <li>✓ Peralatan yang dipinjam harus dikembalikan tepat waktu</li>
+                <li>✓ Hubungi admin jika ada kendala atau pertanyaan</li>
+                <li>✓ Jaga kebersihan dan keamanan laboratorium</li>
+              </ul>
+            </div>
+            
+            <div class="tips-card">
+              <h3>💡 Tips Penggunaan</h3>
+              <ul class="info-list">
+                <li><strong>Kunjungan:</strong> Isi nama guru, kelas yang diajar, dan jam mulai-selesai</li>
+                <li><strong>Peminjaman:</strong> Pilih barang yang tersedia dan tentukan jumlah</li>
+                <li><strong>Pengembalian:</strong> Klik tombol "Kembali" setelah selesai menggunakan</li>
+              </ul>
             </div>
           </div>
-          
-          <div class="info-card">
-            <h3>ℹ️ Informasi Penting</h3>
-            <ul class="info-list">
-              <li>✓ Pastikan mengisi form kunjungan setiap kali mengajar di lab</li>
-              <li>✓ Peralatan yang dipinjam harus dikembalikan tepat waktu</li>
-              <li>✓ Hubungi admin jika ada kendala atau pertanyaan</li>
-              <li>✓ Jaga kebersihan dan keamanan laboratorium</li>
-            </ul>
+        `;
+      } catch (error) {
+        // Fallback jika gagal fetch announcements
+        document.getElementById('dashboard').innerHTML = `
+          <h2>📋 Dashboard</h2>
+          <div class="info-section">
+            <div class="announcement-card">
+              <h3>📢 Pengumuman</h3>
+              <div class="announcement-item">
+                <h4>Selamat Datang di Sistem Manajemen Lab</h4>
+                <p>Gunakan menu <strong>Kunjungan</strong> untuk mencatat kunjungan mengajar Anda di laboratorium.</p>
+                <p>Gunakan menu <strong>Peminjaman</strong> untuk meminjam peralatan laboratorium.</p>
+              </div>
+            </div>
+            
+            <div class="info-card">
+              <h3>ℹ️ Informasi Penting</h3>
+              <ul class="info-list">
+                <li>✓ Pastikan mengisi form kunjungan setiap kali mengajar di lab</li>
+                <li>✓ Peralatan yang dipinjam harus dikembalikan tepat waktu</li>
+                <li>✓ Hubungi admin jika ada kendala atau pertanyaan</li>
+                <li>✓ Jaga kebersihan dan keamanan laboratorium</li>
+              </ul>
+            </div>
+            
+            <div class="tips-card">
+              <h3>💡 Tips Penggunaan</h3>
+              <ul class="info-list">
+                <li><strong>Kunjungan:</strong> Isi nama guru, kelas yang diajar, dan jam mulai-selesai</li>
+                <li><strong>Peminjaman:</strong> Pilih barang yang tersedia dan tentukan jumlah</li>
+                <li><strong>Pengembalian:</strong> Klik tombol "Kembali" setelah selesai menggunakan</li>
+              </ul>
+            </div>
           </div>
-          
-          <div class="tips-card">
-            <h3>💡 Tips Penggunaan</h3>
-            <ul class="info-list">
-              <li><strong>Kunjungan:</strong> Isi nama guru, kelas yang diajar, dan jam mulai-selesai</li>
-              <li><strong>Peminjaman:</strong> Pilih barang yang tersedia dan tentukan jumlah</li>
-              <li><strong>Pengembalian:</strong> Klik tombol "Kembali" setelah selesai menggunakan</li>
-            </ul>
-          </div>
-        </div>
-      `;
+        `;
+      }
     }
     
     showLoading(false);
@@ -781,6 +835,118 @@ async function printReport() {
   } catch (error) {
     console.error('Print error:', error);
     showNotification('Gagal membuat laporan', 'error');
+    showLoading(false);
+  }
+}
+
+// ============ PENGUMUMAN (ANNOUNCEMENTS) ============
+let allPengumuman = [];
+let editingPengumumanId = null;
+
+async function loadPengumuman() {
+  try {
+    showLoading(true);
+    allPengumuman = await fetchAPI('/announcements');
+    
+    let html = "";
+    if (allPengumuman.length === 0) {
+      html = '<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Tidak ada pengumuman</td></tr>';
+    } else {
+      allPengumuman.forEach(item => {
+        const deskripsi = item.description.substring(0, 60) + (item.description.length > 60 ? '...' : '');
+        html += `<tr>
+          <td>${item.title}</td>
+          <td>${deskripsi}</td>
+          <td>${formatDateTime(item.updated_at)}</td>
+          <td>
+            <button onclick="editPengumuman(${item.id})" class="btn-primary">✏️ Edit</button>
+            <button onclick="hapusPengumuman(${item.id})" class="btn-delete">🗑️ Hapus</button>
+          </td>
+        </tr>`;
+      });
+    }
+    document.getElementById("tablePengumuman").innerHTML = html;
+    showLoading(false);
+  } catch (error) {
+    console.error("Error loading pengumuman:", error);
+    showNotification("Gagal memuat pengumuman", 'error');
+    showLoading(false);
+  }
+}
+
+async function tambahPengumuman() {
+  const judul = document.getElementById("judulPengumuman").value.trim();
+  const deskripsi = document.getElementById("deskripsiPengumuman").value.trim();
+
+  if (!judul || !deskripsi) {
+    showNotification("Judul dan deskripsi harus diisi", 'error');
+    return;
+  }
+
+  try {
+    showLoading(true);
+    
+    if (editingPengumumanId) {
+      // Update
+      await fetchAPI("/announcements/" + editingPengumumanId, {
+        method: "PUT",
+        body: JSON.stringify({ title: judul, description: deskripsi })
+      });
+      showNotification("Pengumuman berhasil diupdate", 'success');
+      cancelEditPengumuman();
+    } else {
+      // Create
+      await fetchAPI("/announcements", {
+        method: "POST",
+        body: JSON.stringify({ title: judul, description: deskripsi })
+      });
+      showNotification("Pengumuman berhasil ditambahkan", 'success');
+    }
+    
+    document.getElementById("judulPengumuman").value = '';
+    document.getElementById("deskripsiPengumuman").value = '';
+    loadPengumuman();
+  } catch (error) {
+    console.error("Error saving pengumuman:", error);
+    showNotification(error.error || "Gagal menyimpan pengumuman", 'error');
+    showLoading(false);
+  }
+}
+
+function editPengumuman(id) {
+  const pengumuman = allPengumuman.find(p => p.id === id);
+  if (!pengumuman) return;
+  
+  document.getElementById("judulPengumuman").value = pengumuman.title;
+  document.getElementById("deskripsiPengumuman").value = pengumuman.description;
+  
+  editingPengumumanId = id;
+  document.getElementById("btnSubmitPengumuman").textContent = "💾 Update";
+  document.getElementById("btnCancelEditP").style.display = "inline-block";
+  
+  // Scroll to form
+  document.querySelector("#pengumuman .form").scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEditPengumuman() {
+  editingPengumumanId = null;
+  document.getElementById("judulPengumuman").value = '';
+  document.getElementById("deskripsiPengumuman").value = '';
+  document.getElementById("btnSubmitPengumuman").textContent = "➕ Tambah Pengumuman";
+  document.getElementById("btnCancelEditP").style.display = "none";
+}
+
+async function hapusPengumuman(id) {
+  if (!confirm("Yakin ingin menghapus pengumuman ini?")) return;
+  
+  try {
+    showLoading(true);
+    await fetchAPI("/announcements/" + id, { method: "DELETE" });
+    showNotification("Pengumuman berhasil dihapus", 'success');
+    loadPengumuman();
+  } catch (error) {
+    console.error("Error deleting pengumuman:", error);
+    showNotification(error.error || "Gagal menghapus pengumuman", 'error');
     showLoading(false);
   }
 }

@@ -57,6 +57,7 @@
   <button onclick="showPage('kunjungan')">👥 Kunjungan</button>
   <button onclick="showPage('peminjaman')">📦 Peminjaman</button>
   <button onclick="showPage('barang')">🏷️ Barang</button>
+  <button onclick="showPage('pengumuman')">📢 Pengumuman</button>
   <button onclick="showPage('laporan')">📄 Laporan</button>
 </nav>
 
@@ -242,6 +243,34 @@
           </tr>
         </thead>
         <tbody id="tableBarang"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- PENGUMUMAN - Manajemen Pengumuman (ADMIN ONLY) -->
+<section id="pengumuman" class="page">
+  <div class="card">
+    <h2>📢 Pengumuman</h2>
+
+    <div class="form">
+      <input id="judulPengumuman" placeholder="Judul Pengumuman" autocomplete="off">
+      <textarea id="deskripsiPengumuman" placeholder="Deskripsi / Isi Pengumuman" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;"></textarea>
+      <button onclick="tambahPengumuman()" id="btnSubmitPengumuman">➕ Tambah Pengumuman</button>
+      <button onclick="cancelEditPengumuman()" id="btnCancelEditP" style="display:none; background:#95a5a6;">❌ Batal</button>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Judul</th>
+            <th>Deskripsi</th>
+            <th>Terakhir Diupdate</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tablePengumuman"></tbody>
       </table>
     </div>
   </div>

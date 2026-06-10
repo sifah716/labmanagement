@@ -75,6 +75,14 @@ function initDatabase() {
       FOREIGN KEY(barang_id) REFERENCES barang(id)
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS announcements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`);
+
     // Seed default users
     const adminPassword = hashPassword('admin123');
     const userPassword = hashPassword('user123');
@@ -101,6 +109,18 @@ function initDatabase() {
           console.log('✓ Regular user ready (user/user123)');
         }
       }
+    );
+
+    // Seed default announcement
+    const now = new Date().toISOString();
+    db.run(
+      "INSERT OR IGNORE INTO announcements (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
+      [
+        "Selamat Datang di Sistem Manajemen Lab",
+        "Gunakan menu Kunjungan untuk mencatat kunjungan mengajar Anda di laboratorium. Gunakan menu Peminjaman untuk meminjam peralatan laboratorium.",
+        now,
+        now
+      ]
     );
 
     // Seed data untuk barang
