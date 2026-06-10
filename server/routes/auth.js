@@ -1,8 +1,8 @@
 // ============ AUTHENTICATION ROUTES ============
 const express = require('express');
 const crypto = require('crypto');
-const { db, hashPassword } = require('../database/db');
-const { authenticate } = require('../middleware/auth');
+const { db, hashPassword, addNotification } = require('../database/db');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -147,7 +147,7 @@ router.get("/health", (req, res) => {
   });
 });
 
-// POST /forgot-password
+// POST /forgot-password — Kirim request reset ke admin
 router.post("/forgot-password", (req, res) => {
   const { username } = req.body;
 
@@ -162,42 +162,86 @@ router.post("/forgot-password", (req, res) => {
 
     // Jangan ungkap apakah user ditemukan atau tidak (security)
     if (!user) {
-      return res.json({ success: true, message: "Jika username terdaftar, link reset password akan dibuat" });
+      return res.json({ success: true, message: "Jika username terdaftar, permintaan akan dikirim ke admin." });
     }
 
-    // Hapus token lama yang belum dipakai
-    db.run("DELETE FROM reset_tokens WHERE user_id=? AND used=0", [user.id]);
-
-    // Generate token
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 jam
-    const now = new Date().toISOString();
-
-    db.run(
-      "INSERT INTO reset_tokens (user_id, token, expires_at, used, created_at) VALUES (?, ?, ?, 0, ?)",
-      [user.id, token, expiresAt, now],
-      function(insertErr) {
-        if (insertErr) {
-          return res.status(500).json({ error: "Database error" });
-        }
-
-        // Di production, ini akan dikirim via email
-        // Untuk sekarang, kita return link nya langsung
-        const resetLink = `${req.protocol}://${req.get('host')}/pages/auth/reset-password.html?token=${token}`;
-
-        console.log(`\n[RESET PASSWORD] User: ${user.username}`);
-        console.log(`[RESET PASSWORD] Link: ${resetLink}`);
-        console.log(`[RESET PASSWORD] Berlaku hingga: ${expiresAt}\n`);
-
-        res.json({
-          success: true,
-          message: "Link reset password telah dibuat. Cek console server untuk link reset (untuk development).",
-          resetLink: resetLink,
-          expiresAt: expiresAt
-        });
+    // Cek sudah ada request pending untuk user ini
+    db.get("SELECT id FROM reset_requests WHERE user_id=? AND status='pending'", [user.id], (err2, existing) => {
+      if (err2) return res.status(500).json({ error: "Database error" });
+      if (existing) {
+        return res.json({ success: true, message: "Permintaan reset password sudah dikirim. Tunggu persetujuan admin." });
       }
-    );
+
+      const now = new Date().toISOString();
+      db.run(
+        "INSERT INTO reset_requests (user_id, username, status, created_at) VALUES (?, ?, 'pending', ?)",
+        [user.id, user.username, now],
+        function(insertErr) {
+          if (insertErr) {
+            return res.status(500).json({ error: "Database error" });
+          }
+          console.log(`\n[RESET REQUEST] User: ${user.username} (ID: ${user.id}) — menunggu persetujuan admin\n`);
+          addNotification('reset_request', `${user.username} meminta reset password`, JSON.stringify({ username: user.username }));
+          res.json({
+            success: true,
+            message: "Permintaan reset password telah dikirim ke admin. Silakan tunggu persetujuan."
+          });
+        }
+      );
+    });
   });
+});
+
+// GET /reset-requests — Admin lihat semua request
+router.get("/reset-requests", authenticate, requireAdmin, (req, res) => {
+  db.all(
+    "SELECT id, user_id, username, status, created_at FROM reset_requests ORDER BY created_at DESC",
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: "Database error" });
+      res.json(rows || []);
+    }
+  );
+});
+
+// POST /reset-requests/:id/approve — Admin setujui & set password baru langsung
+router.post("/reset-requests/:id/approve", authenticate, requireAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const { newPassword } = req.body;
+  if (!id) return res.status(400).json({ error: "ID tidak valid" });
+  if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: "Password baru minimal 6 karakter" });
+
+  db.get("SELECT * FROM reset_requests WHERE id=? AND status='pending'", [id], (err, request) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+    if (!request) return res.status(400).json({ error: "Request tidak ditemukan atau sudah diproses" });
+
+    const hashed = hashPassword(newPassword);
+    db.run("UPDATE users SET password=? WHERE id=?", [hashed, request.user_id], function(updateErr) {
+      if (updateErr) return res.status(500).json({ error: "Database error" });
+      db.run("UPDATE reset_requests SET status='approved' WHERE id=?", [id]);
+      db.run("UPDATE users SET token=NULL WHERE id=?", [request.user_id]);
+
+      const display = req.user.display_name || req.user.username;
+      addNotification('reset_approved', `${display} menyetujui reset password ${request.username}`, JSON.stringify({ username: request.username }));
+
+      res.json({ success: true, message: `Password ${request.username} berhasil direset` });
+    });
+  });
+});
+
+// POST /reset-requests/:id/deny — Admin tolak
+router.post("/reset-requests/:id/deny", authenticate, requireAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!id) return res.status(400).json({ error: "ID tidak valid" });
+
+  db.run("UPDATE reset_requests SET status='denied' WHERE id=? AND status='pending'",
+    [id],
+    function(err) {
+      if (err) return res.status(500).json({ error: "Database error" });
+      if (this.changes === 0) return res.status(400).json({ error: "Request tidak ditemukan atau sudah diproses" });
+      res.json({ success: true, message: "Request ditolak" });
+    }
+  );
 });
 
 // POST /reset-password
@@ -245,6 +289,30 @@ router.post("/reset-password", (req, res) => {
       });
     }
   );
+});
+
+// GET /notifications — Ambil notifikasi (admin only)
+router.get("/notifications", authenticate, requireAdmin, (req, res) => {
+  db.all("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+    const unread = rows ? rows.filter(n => !n.is_read).length : 0;
+    res.json({ notifications: rows || [], unread_count: unread });
+  });
+});
+
+// POST /notifications/read — Tandai semua sebagai sudah dibaca
+router.post("/notifications/read", authenticate, requireAdmin, (req, res) => {
+  db.run("UPDATE notifications SET is_read=1 WHERE is_read=0", [], function(err) {
+    if (err) return res.status(500).json({ error: "Database error" });
+    res.json({ success: true });
+  });
+});
+
+// DELETE /notifications/old — Hapus notifikasi > 7 hari
+router.delete("/notifications/old", authenticate, requireAdmin, (req, res) => {
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  db.run("DELETE FROM notifications WHERE created_at < ?", [weekAgo]);
+  res.json({ success: true });
 });
 
 // Debug endpoint to check if users exist (remove in production)

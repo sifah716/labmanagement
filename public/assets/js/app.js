@@ -146,7 +146,7 @@ function showPage(id) {
   if (id === 'kunjungan') loadKunjungan();
   if (id === 'peminjaman') loadPeminjaman();
   if (id === 'barang') loadBarang();
-  if (id === 'users') loadUsers();
+  if (id === 'users') { loadUsers(); loadResetRequests(); }
   if (id === 'pengumuman') loadPengumuman();
 }
 
@@ -380,7 +380,7 @@ async function loadKunjungan(search = '', userFilter = '', labFilter = '') {
           <td>${formatDate(item.tanggal)}</td>
           <td>${item.jam_mulai}</td>
           <td>${item.jam_selesai}</td>
-          ${isAdmin ? `<td>${item.display_name || item.created_by || '-'}</td>` : ''}
+          ${isAdmin ? `<td>${item.user_lab || item.display_name || '-'}</td>` : ''}
           <td>
             <button onclick="editKunjungan(${item.id})" class="btn-primary">✏️ Edit</button>
             ${isAdmin ? `<button onclick="hapusKunjungan(${item.id})" class="btn-delete">🗑️ Hapus</button>` : ''}
@@ -520,7 +520,7 @@ async function loadPeminjaman(search = '', status = '', userFilter = '', labFilt
           <td>${formatDate(item.waktu_pinjam)}</td>
           <td>${item.jumlah}</td>
           <td><span class="status-badge ${item.status}">${item.status}</span></td>
-          ${isAdmin ? `<td>${item.display_name || item.created_by || '-'}</td>` : ''}
+          ${isAdmin ? `<td>${item.user_lab || item.display_name || '-'}</td>` : ''}
           <td>
             ${item.status === 'dipinjam' ? 
               `<button onclick="kembaliPeminjaman(${item.id})" class="btn-primary">✓ Kembali</button>` : 
@@ -1259,6 +1259,172 @@ async function hapusUser(id) {
   }
 }
 
+// ============ RESET REQUESTS (Admin) ============
+async function loadResetRequests() {
+  try {
+    const requests = await fetchAPI('/auth/reset-requests');
+    const pending = requests.filter(r => r.status === 'pending');
+
+    // Update badge on nav
+    const badge = document.getElementById('resetBadge');
+    if (badge) {
+      badge.textContent = pending.length;
+      badge.style.display = pending.length > 0 ? 'inline-flex' : 'none';
+    }
+
+    // Update card
+    const card = document.getElementById('resetRequestsCard');
+    const tbody = document.getElementById('tableResetRequests');
+    if (!card || !tbody) return;
+
+    if (pending.length === 0) {
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = 'block';
+    let html = '';
+    pending.forEach(r => {
+      const time = new Date(r.created_at).toLocaleString('id-ID');
+      html += `<tr>
+        <td><strong>${r.username}</strong></td>
+        <td>${time}</td>
+        <td>
+          <button onclick="approveResetRequest(${r.id})" class="btn-primary" style="background:var(--success)">✓ Setujui</button>
+          <button onclick="denyResetRequest(${r.id})" class="btn-delete">✕ Tolak</button>
+        </td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+  } catch (error) {
+    console.error('Error loading reset requests:', error);
+  }
+}
+
+async function approveResetRequest(id) {
+  const password = prompt('Masukkan password baru untuk user (min 6 karakter):');
+  if (!password) return;
+  if (password.length < 6) { showNotification('Password minimal 6 karakter', 'error'); return; }
+  if (!confirm(`Setel ulang password user ini menjadi "${password}"?`)) return;
+
+  try {
+    showLoading(true);
+    await fetchAPI(`/auth/reset-requests/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword: password })
+    });
+    showNotification('Password berhasil direset', 'success');
+    loadResetRequests();
+  } catch (error) {
+    showNotification(error.message || 'Gagal', 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function denyResetRequest(id) {
+  if (!confirm('Tolak permintaan reset password ini?')) return;
+  try {
+    showLoading(true);
+    await fetchAPI(`/auth/reset-requests/${id}/deny`, { method: 'POST' });
+    showNotification('Permintaan ditolak', 'success');
+    loadResetRequests();
+  } catch (error) {
+    showNotification(error.message || 'Gagal menolak request', 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ============ NOTIFICATIONS (Admin) ============
+let notifOpen = false;
+
+function toggleNotifications() {
+  const dd = document.getElementById('notifDropdown');
+  notifOpen = !notifOpen;
+  dd.classList.toggle('show', notifOpen);
+  if (notifOpen) {
+    loadNotifications();
+    markNotifRead();
+  }
+}
+
+// Click outside to close
+document.addEventListener('click', function(e) {
+  if (notifOpen && !e.target.closest('#notifBtn')) {
+    document.getElementById('notifDropdown').classList.remove('show');
+    notifOpen = false;
+  }
+});
+
+async function loadNotifications() {
+  try {
+    const data = await fetchAPI('/auth/notifications');
+    const badge = document.getElementById('notifBadge');
+    badge.textContent = data.unread_count;
+    badge.style.display = data.unread_count > 0 ? 'flex' : 'none';
+
+    // Only update the list if the dropdown is open
+    if (!notifOpen) return;
+
+    const list = document.getElementById('notifList');
+    if (!data.notifications || data.notifications.length === 0) {
+      list.innerHTML = '<div class="notif-empty">Belum ada notifikasi</div>';
+      return;
+    }
+
+    let html = '';
+    data.notifications.forEach(n => {
+      const time = timeAgo(n.created_at);
+      const icon = n.type === 'kunjungan' ? '👩‍🏫' : n.type === 'peminjaman' ? '📦' : n.type === 'reset_request' ? '🔑' : '✅';
+      const unreadCls = !n.is_read ? ' unread' : '';
+
+      let detailHtml = '';
+      if (n.detail) {
+        try {
+          const d = JSON.parse(n.detail);
+          if (n.type === 'kunjungan') {
+            detailHtml = `${d.nama_guru} — ${d.kelas_diajar} (${d.jam_mulai}–${d.jam_selesai})${d.lab ? ' · ' + d.lab : ''}`;
+          } else if (n.type === 'peminjaman') {
+            detailHtml = `${d.nama} — ${d.barang} × ${d.jumlah}${d.lab ? ' · ' + d.lab : ''}`;
+          }
+        } catch(e) { detailHtml = n.detail; }
+      }
+
+      html += `<div class="notif-item${unreadCls}">
+        <div class="notif-item-icon">${icon}</div>
+        <div class="notif-item-content">
+          <div class="notif-item-msg">${n.message}</div>
+          ${detailHtml ? `<div class="notif-item-detail">${detailHtml}</div>` : ''}
+          <div class="notif-item-time">${time}</div>
+        </div>
+      </div>`;
+    });
+    list.innerHTML = html;
+  } catch (error) {
+    console.error('Error loading notifications:', error);
+  }
+}
+
+function timeAgo(dateStr) {
+  const now = Date.now();
+  const d = new Date(dateStr).getTime();
+  const diff = now - d;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'baru saja';
+  if (mins < 60) return `${mins}m lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}j lalu`;
+  const days = Math.floor(hours / 24);
+  return `${days}h lalu`;
+}
+
+async function markNotifRead() {
+  try {
+    await fetchAPI('/auth/notifications/read', { method: 'POST' });
+  } catch(e) {}
+}
+
 // ============ FILTER LOADERS ============
 async function loadUserFilters() {
   try {
@@ -1313,5 +1479,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load initial data
   loadDashboard();
   loadBarangForSelect();
-  if (currentUser.role === 'admin') loadUserFilters();
+  if (currentUser.role === 'admin') { loadUserFilters(); loadResetRequests(); loadNotifications(); setInterval(loadNotifications, 30000); }
 });

@@ -1,6 +1,6 @@
 // ============ PEMINJAMAN ROUTES ============
 const express = require('express');
-const { db } = require('../database/db');
+const { db, addNotification } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -9,12 +9,12 @@ const router = express.Router();
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
   const status = req.query.status || '';
-  const userId = req.query.user_id || '';
-  const lab = req.query.lab || '';
+  const created_by = req.query.created_by || '';
+  const user_lab = req.query.user_lab || '';
 
   let query = `
     SELECT p.*, b.nama as barang_nama, b.kode as barang_kode,
-           u.display_name as creator_name, u.lab as creator_lab
+           u.display_name as display_name, u.lab as creator_lab
     FROM peminjaman p
     JOIN barang b ON p.barang_id = b.id
     LEFT JOIN users u ON p.created_by = u.id
@@ -32,14 +32,14 @@ router.get("/", authenticate, (req, res) => {
     params.push(status);
   }
 
-  if (userId) {
-    query += " AND p.created_by = ?";
-    params.push(parseInt(userId));
+  if (created_by) {
+    query += " AND u.username = ?";
+    params.push(created_by);
   }
 
-  if (lab) {
+  if (user_lab) {
     query += " AND p.user_lab = ?";
-    params.push(lab);
+    params.push(user_lab);
   }
 
   query += " ORDER BY p.waktu_pinjam DESC";
@@ -101,6 +101,10 @@ router.post("/", authenticate, (req, res) => {
         if (insertErr) {
           return res.status(500).json({ error: "Database error", details: insertErr.message });
         }
+        // Notifikasi
+        const detail = JSON.stringify({ nama, barang: row.nama, jumlah: jumlahInt, lab: req.user.lab || '' });
+        const display = req.user.display_name || req.user.username;
+        addNotification('peminjaman', `${display} meminjam ${row.nama}`, detail);
         res.status(201).json({ success: true, id: this.lastID });
       });
     });

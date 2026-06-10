@@ -94,6 +94,30 @@ function initDatabase() {
     )`);
     db.run("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON reset_tokens(token)");
 
+    // Tabel reset requests (user minta reset → admin approve)
+    db.run(`CREATE TABLE IF NOT EXISTS reset_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      username TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      token TEXT,
+      created_at TEXT NOT NULL,
+      expires_at TEXT,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+    db.run("CREATE INDEX IF NOT EXISTS idx_reset_requests_status ON reset_requests(status)");
+
+    // Tabel notifikasi aktivitas
+    db.run(`CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      detail TEXT DEFAULT '',
+      is_read INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )`);
+    db.run("CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(is_read)");
+
     db.run(`CREATE TABLE IF NOT EXISTS announcements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -196,5 +220,13 @@ module.exports = {
   db,
   hashPassword,
   initDatabase,
-  closeDatabase
+  closeDatabase,
+  addNotification
 };
+
+// Tambah notifikasi aktivitas
+function addNotification(type, message, detail = '') {
+  const now = new Date().toISOString();
+  db.run("INSERT INTO notifications (type, message, detail, created_at) VALUES (?, ?, ?, ?)",
+    [type, message, detail, now]);
+}

@@ -1,6 +1,6 @@
 // ============ KUNJUNGAN ROUTES ============
 const express = require('express');
-const { db } = require('../database/db');
+const { db, addNotification } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -8,11 +8,11 @@ const router = express.Router();
 // GET /kunjungan — Get all kunjungan with optional search, filter by user/lab
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
-  const userId = req.query.user_id || '';
-  const lab = req.query.lab || '';
+  const created_by = req.query.created_by || '';
+  const user_lab = req.query.user_lab || '';
 
   let query = `
-    SELECT k.*, u.display_name as creator_name, u.lab as creator_lab
+    SELECT k.*, u.display_name as display_name, u.lab as creator_lab
     FROM kunjungan k
     LEFT JOIN users u ON k.created_by = u.id
     WHERE 1=1
@@ -24,14 +24,14 @@ router.get("/", authenticate, (req, res) => {
     params.push(`%${search}%`, `%${search}%`);
   }
 
-  if (userId) {
-    query += " AND k.created_by = ?";
-    params.push(parseInt(userId));
+  if (created_by) {
+    query += " AND u.username = ?";
+    params.push(created_by);
   }
 
-  if (lab) {
+  if (user_lab) {
     query += " AND k.user_lab = ?";
-    params.push(lab);
+    params.push(user_lab);
   }
 
   query += " ORDER BY k.tanggal DESC, k.jam_mulai DESC";
@@ -69,6 +69,10 @@ router.post("/", authenticate, (req, res) => {
       if (err) {
         return res.status(500).json({ error: "Database error", details: err.message });
       }
+      // Notifikasi
+      const detail = JSON.stringify({ nama_guru, kelas_diajar, jam_mulai, jam_selesai, lab: req.user.lab || '' });
+      const display = req.user.display_name || req.user.username;
+      addNotification('kunjungan', `${display} menambahkan kunjungan`, detail);
       res.status(201).json({ success: true, id: this.lastID });
     }
   );
