@@ -132,7 +132,6 @@ db.run(
       { nama: "Keyboard", kode: "KEY001", stok: 10 }
     ];
 
-    const now = new Date().toISOString();
     barangItems.forEach(item => {
       db.run(
         "INSERT OR IGNORE INTO barang (nama, kode, stok, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
