@@ -1,6 +1,8 @@
-// API Configuration - Auto-detect environment
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000'  // Development
-  : window.location.origin;   // Production (same domain)
+// API Configuration
+// Frontend dan API dari server yang sama (Express), pakai relative URL
+const API_URL = '';
 
-console.log('API URL:', API_URL);
+// Untuk development local, bisa diubah jika frontend terpisah:
+// const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+
+console.log('API URL:', API_URL || '(relative)');

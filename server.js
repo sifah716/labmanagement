@@ -16,6 +16,7 @@ const announcementsRoutes = require('./server/routes/announcements');
 const app = express();
 
 // Middleware
+app.set('trust proxy', 1); // trust first proxy (Railway, Heroku, dll)
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

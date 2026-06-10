@@ -80,6 +80,18 @@ function initDatabase() {
     db.run("CREATE INDEX IF NOT EXISTS idx_kunjungan_tanggal ON kunjungan(tanggal)");
     db.run("CREATE INDEX IF NOT EXISTS idx_users_token ON users(token)");
 
+    // Tabel reset tokens untuk fitur lupa password
+    db.run(`CREATE TABLE IF NOT EXISTS reset_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+    db.run("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON reset_tokens(token)");
+
     db.run(`CREATE TABLE IF NOT EXISTS announcements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
