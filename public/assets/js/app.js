@@ -79,6 +79,11 @@ async function fetchAPI(endpoint, options = {}) {
     throw new Error('Unauthorized');
   }
   
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.error || `Gagal (${response.status})`);
+  }
+  
   return response.json();
 }
 
@@ -357,7 +362,7 @@ async function tambahKunjungan() {
     loadKunjungan();
   } catch (error) {
     console.error("Error saving kunjungan:", error);
-    showNotification(error.error || "Gagal menyimpan kunjungan", 'error');
+    showNotification(error.message || "Gagal menyimpan kunjungan", 'error');
     showLoading(false);
   }
 }
@@ -401,7 +406,7 @@ async function hapusKunjungan(id) {
     loadKunjungan();
   } catch (error) {
     console.error("Error deleting kunjungan:", error);
-    showNotification(error.error || "Gagal menghapus kunjungan", 'error');
+    showNotification(error.message || "Gagal menghapus kunjungan", 'error');
     showLoading(false);
   }
 }
@@ -512,7 +517,7 @@ async function tambahPeminjaman() {
     loadPeminjaman();
   } catch (error) {
     console.error("Error adding peminjaman:", error);
-    showNotification(error.error || "Gagal menambahkan peminjaman", 'error');
+    showNotification(error.message || "Gagal menambahkan peminjaman", 'error');
     showLoading(false);
   }
 }
@@ -528,7 +533,7 @@ async function kembaliPeminjaman(id) {
     loadPeminjaman();
   } catch (error) {
     console.error("Error returning peminjaman:", error);
-    showNotification(error.error || "Gagal mengembalikan barang", 'error');
+    showNotification(error.message || "Gagal mengembalikan barang", 'error');
     showLoading(false);
   }
 }
@@ -552,14 +557,14 @@ async function updatePeminjaman(id, nama) {
   try {
     showLoading(true);
     await fetchAPI("/peminjaman/" + id, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({ nama })
     });
     showNotification("Peminjaman berhasil diupdate", 'success');
     loadPeminjaman();
   } catch (error) {
     console.error("Error updating peminjaman:", error);
-    showNotification(error.error || "Gagal mengupdate peminjaman", 'error');
+    showNotification(error.message || "Gagal mengupdate peminjaman", 'error');
     showLoading(false);
   }
 }
@@ -575,7 +580,7 @@ async function hapusPeminjaman(id) {
     loadPeminjaman();
   } catch (error) {
     console.error("Error deleting peminjaman:", error);
-    showNotification(error.error || "Gagal menghapus peminjaman", 'error');
+    showNotification(error.message || "Gagal menghapus peminjaman", 'error');
     showLoading(false);
   }
 }
@@ -661,7 +666,7 @@ async function tambahBarang() {
     loadBarangForSelect();
   } catch (error) {
     console.error("Error saving barang:", error);
-    showNotification(error.error || "Gagal menyimpan barang", 'error');
+    showNotification(error.message || "Gagal menyimpan barang", 'error');
     showLoading(false);
   }
 }
@@ -702,7 +707,7 @@ async function hapusBarang(id) {
     loadBarangForSelect();
   } catch (error) {
     console.error("Error deleting barang:", error);
-    showNotification(error.error || "Gagal menghapus barang", 'error');
+    showNotification(error.message || "Gagal menghapus barang", 'error');
     showLoading(false);
   }
 }
@@ -721,9 +726,9 @@ async function exportKunjungan() {
     showLoading(true);
     const data = await fetchAPI('/kunjungan');
     
-    let csv = 'Nama,Kelas,Tanggal\n';
+    let csv = 'Nama Guru,Kelas Diajar,Tanggal,Jam Mulai,Jam Selesai\n';
     data.forEach(item => {
-      csv += `"${item.nama}","${item.kelas}","${formatDate(item.waktu)}"\n`;
+      csv += `"${item.nama_guru}","${item.kelas_diajar}","${formatDate(item.tanggal)}","${item.jam_mulai}","${item.jam_selesai}"\n`;
     });
     
     downloadCSV('kunjungan.csv', csv);
@@ -814,7 +819,7 @@ async function printReport() {
         <table>
           <tr><th>Nama</th><th>Kelas</th><th>Tanggal</th></tr>
           ${kunjungan.slice(0, 10).map(k => `
-            <tr><td>${k.nama}</td><td>${k.kelas}</td><td>${formatDate(k.waktu)}</td></tr>
+            <tr><td>${k.nama_guru}</td><td>${k.kelas_diajar}</td><td>${formatDate(k.tanggal)}</td></tr>
           `).join('')}
         </table>
         
@@ -908,7 +913,7 @@ async function tambahPengumuman() {
     loadPengumuman();
   } catch (error) {
     console.error("Error saving pengumuman:", error);
-    showNotification(error.error || "Gagal menyimpan pengumuman", 'error');
+    showNotification(error.message || "Gagal menyimpan pengumuman", 'error');
     showLoading(false);
   }
 }
@@ -946,7 +951,7 @@ async function hapusPengumuman(id) {
     loadPengumuman();
   } catch (error) {
     console.error("Error deleting pengumuman:", error);
-    showNotification(error.error || "Gagal menghapus pengumuman", 'error');
+    showNotification(error.message || "Gagal menghapus pengumuman", 'error');
     showLoading(false);
   }
 }

@@ -27,13 +27,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
   <title>Dashboard User - Lab Management System</title>
+<script>try { var u=JSON.parse(localStorage.getItem('user')); if (u&&u.role==='admin') window.location.href='/pages/admin/dashboard.html'; }catch(e){}</script>
   
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
   
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/assets/images/icon-192.png">
-  <link rel="apple-touch-icon" href="/assets/images/icon-192.png">
   
   <!-- Stylesheet -->
   <link rel="stylesheet" href="/assets/css/main.css">

@@ -655,27 +655,6 @@ td {
   background: #5568d3;
 }
 
-.info-list {
-  list-style: none;
-  padding: 0;
-}
-
-.info-list li {
-  padding: 12px 0;
-  border-bottom: 1px solid #ecf0f1;
-  color: #555;
-  line-height: 1.6;
-}
-
-.info-list li:last-child {
-  border-bottom: none;
-}
-
-.info-list li strong {
-  color: #667eea;
-  font-weight: 600;
-}
-
 @media (max-width: 768px) {
   .info-section {
     grid-template-columns: 1fr;

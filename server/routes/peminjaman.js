@@ -85,67 +85,13 @@ router.post("/", authenticate, (req, res) => {
   });
 });
 
-// PUT /peminjaman/:id - Update peminjaman (return or edit details)
+// PUT /peminjaman/:id - Return item (mengembalikan barang)
 router.put("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {
     return res.status(400).json({ error: "ID tidak valid" });
   }
 
-  const { nama, jumlah } = req.body;
-
-  // If updating peminjaman details (for user edit)
-  if (nama !== undefined || jumlah !== undefined) {
-    db.get("SELECT * FROM peminjaman WHERE id=?", [id], (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: "Database error", details: err.message });
-      }
-      if (!row) {
-        return res.status(404).json({ error: "Peminjaman tidak ditemukan" });
-      }
-
-      const newNama = nama !== undefined ? nama : row.nama;
-      const newJumlah = jumlah !== undefined ? parseInt(jumlah) : row.jumlah;
-
-      // If jumlah changed, need to adjust stock
-      if (newJumlah !== row.jumlah && row.status === 'dipinjam') {
-        const diff = newJumlah - row.jumlah;
-        const now = new Date().toISOString();
-
-        db.get("SELECT stok FROM barang WHERE id=?", [row.barang_id], (err2, barang) => {
-          if (err2) {
-            return res.status(500).json({ error: "Database error" });
-          }
-          if (barang.stok < diff) {
-            return res.status(400).json({ error: "Stok tidak cukup untuk perubahan jumlah" });
-          }
-
-          db.run("UPDATE barang SET stok = stok - ?, updated_at=? WHERE id=?", [diff, now, row.barang_id], (err3) => {
-            if (err3) {
-              return res.status(500).json({ error: "Database error" });
-            }
-
-            db.run("UPDATE peminjaman SET nama=?, jumlah=? WHERE id=?", [newNama, newJumlah, id], (err4) => {
-              if (err4) {
-                return res.status(500).json({ error: "Database error" });
-              }
-              res.json({ success: true });
-            });
-          });
-        });
-      } else {
-        db.run("UPDATE peminjaman SET nama=? WHERE id=?", [newNama, id], (err5) => {
-          if (err5) {
-            return res.status(500).json({ error: "Database error" });
-          }
-          res.json({ success: true });
-        });
-      }
-    });
-    return;
-  }
-
-  // Original return functionality
   const now = new Date().toISOString();
 
   db.get("SELECT barang_id, jumlah, status FROM peminjaman WHERE id=?", [id], (err, row) => {
@@ -175,6 +121,77 @@ router.put("/:id", authenticate, (req, res) => {
         res.json({ success: true });
       });
     });
+  });
+});
+
+// PATCH /peminjaman/:id - Edit peminjaman details (nama, jumlah)
+router.patch("/:id", authenticate, (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: "ID tidak valid" });
+  }
+
+  const { nama, jumlah } = req.body;
+  if (nama === undefined && jumlah === undefined) {
+    return res.status(400).json({ error: "Tidak ada field yang diupdate" });
+  }
+
+  db.get("SELECT * FROM peminjaman WHERE id=?", [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: "Database error", details: err.message });
+    }
+    if (!row) {
+      return res.status(404).json({ error: "Peminjaman tidak ditemukan" });
+    }
+
+    const newNama = nama !== undefined ? nama : row.nama;
+    const newJumlah = jumlah !== undefined ? parseInt(jumlah) : row.jumlah;
+    const now = new Date().toISOString();
+    let shouldUpdateStock = false;
+    let stockDiff = 0;
+
+    if (jumlah !== undefined && newJumlah !== row.jumlah) {
+      if (row.status !== 'dipinjam') {
+        return res.status(400).json({ error: "Tidak bisa mengubah jumlah barang yang sudah dikembalikan" });
+      }
+      stockDiff = newJumlah - row.jumlah;
+      shouldUpdateStock = true;
+    }
+
+    function doUpdate() {
+      let setClauses = [];
+      let params = [];
+      if (nama !== undefined && newNama !== row.nama) {
+        setClauses.push("nama=?");
+        params.push(newNama);
+      }
+      if (jumlah !== undefined && newJumlah !== row.jumlah) {
+        setClauses.push("jumlah=?");
+        params.push(newJumlah);
+      }
+      if (setClauses.length === 0) {
+        return res.json({ success: true });
+      }
+      db.run(`UPDATE peminjaman SET ${setClauses.join(", ")} WHERE id=?`, [...params, id], (err5) => {
+        if (err5) return res.status(500).json({ error: "Database error" });
+        res.json({ success: true });
+      });
+    }
+
+    if (shouldUpdateStock) {
+      db.get("SELECT stok FROM barang WHERE id=?", [row.barang_id], (err2, barang) => {
+        if (err2) return res.status(500).json({ error: "Database error" });
+        if (barang.stok < stockDiff) {
+          return res.status(400).json({ error: "Stok tidak cukup untuk perubahan jumlah" });
+        }
+        db.run("UPDATE barang SET stok = stok - ?, updated_at=? WHERE id=?", [stockDiff, now, row.barang_id], (err3) => {
+          if (err3) return res.status(500).json({ error: "Database error" });
+          doUpdate();
+        });
+      });
+    } else {
+      doUpdate();
+    }
   });
 });
 

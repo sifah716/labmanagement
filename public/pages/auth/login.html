@@ -127,7 +127,12 @@
   <script>
     // Check if already logged in
     if (localStorage.getItem('token')) {
-      window.location.href = '/dashboard.html';
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.role === 'admin') {
+        window.location.href = '/pages/admin/dashboard.html';
+      } else {
+        window.location.href = '/pages/user/dashboard.html';
+      }
     }
 
     async function handleLogin(event) {

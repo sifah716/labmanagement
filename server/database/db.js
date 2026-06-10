@@ -68,12 +68,17 @@ function initDatabase() {
       nama TEXT NOT NULL,
       barang_id INTEGER NOT NULL,
       jumlah INTEGER NOT NULL,
-      status TEXT NOT NULL DEFAULT 'dipinjam',
+      status TEXT NOT NULL DEFAULT 'dipinjam' CHECK(status IN ('dipinjam', 'kembali')),
       waktu_pinjam TEXT NOT NULL,
       waktu_kembali TEXT,
       created_at TEXT NOT NULL,
-      FOREIGN KEY(barang_id) REFERENCES barang(id)
+      FOREIGN KEY(barang_id) REFERENCES barang(id) ON DELETE CASCADE
     )`);
+
+    db.run("CREATE INDEX IF NOT EXISTS idx_peminjaman_status ON peminjaman(status)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_peminjaman_barang ON peminjaman(barang_id)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_kunjungan_tanggal ON kunjungan(tanggal)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_users_token ON users(token)");
 
     db.run(`CREATE TABLE IF NOT EXISTS announcements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

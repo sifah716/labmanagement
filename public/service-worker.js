@@ -1,7 +1,6 @@
 const CACHE_NAME = 'lab-manager-v2';
 const urlsToCache = [
   '/',
-  '/dashboard/',
   '/assets/css/main.css',
   '/assets/js/app.js',
   '/manifest.json'

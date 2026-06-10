@@ -11,9 +11,6 @@
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
   
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/assets/images/icon-192.png">
-  <link rel="apple-touch-icon" href="/assets/images/icon-192.png">
   
   <!-- Stylesheet -->
   <link rel="stylesheet" href="/assets/css/main.css">
@@ -159,11 +156,16 @@
     window.addEventListener('DOMContentLoaded', () => {
       const token = localStorage.getItem('token');
       if (token) {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user.role === 'admin') {
-          window.location.href = '/pages/admin/dashboard.html';
-        } else {
-          window.location.href = '/pages/user/dashboard.html';
+        try {
+          const user = JSON.parse(localStorage.getItem('user'));
+          if (user && user.role === 'admin') {
+            window.location.href = '/pages/admin/dashboard.html';
+          } else if (user) {
+            window.location.href = '/pages/user/dashboard.html';
+          }
+        } catch (e) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
         }
       }
     });
