@@ -87,7 +87,6 @@ header {
   color: white;
   padding: 0;
   position: relative;
-  overflow: hidden;
 }
 
 header::before {
@@ -197,7 +196,7 @@ header p {
   border-radius: var(--radius);
   box-shadow: 0 10px 40px rgba(15,23,42,0.2);
   border: 1px solid var(--border);
-  z-index: 999;
+  z-index: 10000;
   overflow: hidden;
 }
 
