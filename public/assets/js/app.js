@@ -189,24 +189,34 @@ async function loadDashboard() {
         chartDiv.innerHTML = '<p style="text-align:center; color:#7f8c8d;">Belum ada data peminjaman</p>';
       }
     } else {
-      // User: Tampilkan pengumuman dan informasi
+      // User: Tampilkan pengumuman (slider) dan informasi
       try {
         const announcements = await fetchAPI('/announcements');
-        let announcementHTML = '';
+        let slidesHTML = '';
+        let dotsHTML = '';
         
         if (announcements.length > 0) {
-          announcements.forEach(ann => {
+          announcements.forEach((ann, index) => {
             const updatedDate = new Date(ann.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            announcementHTML += `
-              <div class="announcement-item">
-                <h4>${ann.title}</h4>
-                <p>${ann.description}</p>
-                <small>Terakhir diperbarui: ${updatedDate}</small>
+            const isActive = index === 0 ? 'active' : '';
+            slidesHTML += `
+              <div class="slide ${isActive}">
+                <div class="announcement-item">
+                  <h4>${ann.title}</h4>
+                  <p>${ann.description}</p>
+                  <small>Terakhir diperbarui: ${updatedDate}</small>
+                </div>
               </div>
             `;
+            dotsHTML += `<button class="slider-dot ${isActive}" data-index="${index}" aria-label="Slide ${index + 1}"></button>`;
           });
         } else {
-          announcementHTML = '<div class="announcement-item"><p>Tidak ada pengumuman saat ini</p></div>';
+          slidesHTML = `
+            <div class="slide active">
+              <div class="announcement-item"><p>Tidak ada pengumuman saat ini</p></div>
+            </div>
+          `;
+          dotsHTML = '';
         }
         
         document.getElementById('dashboard').innerHTML = `
@@ -214,7 +224,11 @@ async function loadDashboard() {
           <div class="info-section">
             <div class="announcement-card">
               <h3>📢 Pengumuman</h3>
-              ${announcementHTML}
+              <div class="announcement-slider" id="announcementSlider">
+                <div class="slide-track">${slidesHTML}</div>
+                ${dotsHTML ? `<div class="slider-dots">${dotsHTML}</div>` : ''}
+                ${announcements.length > 1 ? `<div class="slide-counter" id="slideCounter">1 / ${announcements.length}</div>` : ''}
+              </div>
             </div>
             
             <div class="info-card">
@@ -237,6 +251,10 @@ async function loadDashboard() {
             </div>
           </div>
         `;
+
+        if (announcements.length > 1) {
+          startAnnouncementSlider();
+        }
       } catch (error) {
         // Fallback jika gagal fetch announcements
         document.getElementById('dashboard').innerHTML = `
@@ -244,10 +262,16 @@ async function loadDashboard() {
           <div class="info-section">
             <div class="announcement-card">
               <h3>📢 Pengumuman</h3>
-              <div class="announcement-item">
-                <h4>Selamat Datang di Sistem Manajemen Lab</h4>
-                <p>Gunakan menu <strong>Kunjungan</strong> untuk mencatat kunjungan mengajar Anda di laboratorium.</p>
-                <p>Gunakan menu <strong>Peminjaman</strong> untuk meminjam peralatan laboratorium.</p>
+              <div class="announcement-slider">
+                <div class="slide-track">
+                  <div class="slide active">
+                    <div class="announcement-item">
+                      <h4>Selamat Datang di Sistem Manajemen Lab</h4>
+                      <p>Gunakan menu <strong>Kunjungan</strong> untuk mencatat kunjungan mengajar Anda di laboratorium.</p>
+                      <p>Gunakan menu <strong>Peminjaman</strong> untuk meminjam peralatan laboratorium.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -280,6 +304,54 @@ async function loadDashboard() {
     showNotification('Gagal memuat dashboard', 'error');
     showLoading(false);
   }
+}
+
+// ============ ANNOUNCEMENT SLIDER ============
+let announcementSliderInterval = null;
+
+function startAnnouncementSlider() {
+  const slider = document.getElementById('announcementSlider');
+  if (!slider) return;
+
+  // Stop existing interval
+  if (announcementSliderInterval) {
+    clearInterval(announcementSliderInterval);
+  }
+
+  const slides = slider.querySelectorAll('.slide');
+  const dots = slider.querySelectorAll('.slider-dot');
+  const counter = slider.querySelector('.slide-counter');
+  let current = 0;
+  let isHovering = false;
+
+  function goTo(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+    slides[index].classList.add('active');
+    if (dots[index]) dots[index].classList.add('active');
+    if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
+    current = index;
+  }
+
+  function next() {
+    goTo((current + 1) % slides.length);
+  }
+
+  // Click dots
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      goTo(parseInt(dot.dataset.index));
+    });
+  });
+
+  // Pause on hover
+  slider.addEventListener('mouseenter', () => { isHovering = true; });
+  slider.addEventListener('mouseleave', () => { isHovering = false; });
+
+  // Auto play
+  announcementSliderInterval = setInterval(() => {
+    if (!isHovering) next();
+  }, 4000);
 }
 
 // ============ KUNJUNGAN ============
