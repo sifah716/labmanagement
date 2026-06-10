@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lab-manager-v1';
+const CACHE_NAME = 'lab-manager-v2';
 const urlsToCache = [
   '/',
   '/dashboard/',
