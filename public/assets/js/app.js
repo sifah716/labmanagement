@@ -1344,11 +1344,13 @@ function toggleNotifications() {
   notifOpen = !notifOpen;
   
   if (notifOpen) {
-    const userInfo = document.querySelector('.user-info');
-    const rect = userInfo.getBoundingClientRect();
+    const btn = document.getElementById('notifBtn');
+    const rect = btn.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
     dd.style.position = 'fixed';
     dd.style.top = (rect.bottom + 8) + 'px';
-    dd.style.right = (window.innerWidth - rect.right) + 'px';
+    dd.style.left = centerX + 'px';
+    dd.style.transform = 'translateX(-50%)';
     dd.classList.add('show');
     loadNotifications();
     markNotifRead();
@@ -1356,7 +1358,8 @@ function toggleNotifications() {
     dd.classList.remove('show');
     dd.style.position = '';
     dd.style.top = '';
-    dd.style.right = '';
+    dd.style.left = '';
+    dd.style.transform = '';
   }
 }
 
@@ -1367,7 +1370,8 @@ document.addEventListener('click', function(e) {
     dd.classList.remove('show');
     dd.style.position = '';
     dd.style.top = '';
-    dd.style.right = '';
+    dd.style.left = '';
+    dd.style.transform = '';
     notifOpen = false;
   }
 });
@@ -1379,7 +1383,8 @@ document.addEventListener('scroll', function() {
     dd.classList.remove('show');
     dd.style.position = '';
     dd.style.top = '';
-    dd.style.right = '';
+    dd.style.left = '';
+    dd.style.transform = '';
     notifOpen = false;
   }
 }, { passive: true });
