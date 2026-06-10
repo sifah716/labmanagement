@@ -526,7 +526,7 @@ button:active {
   min-width: 250px;
 }
 
-.filter-box select {
+.search-box select, .filter-box select {
   min-width: 160px;
 }
 
@@ -1150,6 +1150,85 @@ tr:hover td {
   margin-bottom: 14px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* ============ MODAL ============ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3);
+  width: 100%;
+  max-width: 480px;
+  animation: fadeIn 0.2s ease-out;
+  border: 1px solid var(--border);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+}
+
+.modal-close:hover {
+  background: var(--navy-100);
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* ============ STATUS BADGE — ROLE ============ */
+.status-badge.admin {
+  background: var(--purple-subtle);
+  color: var(--purple);
+}
+
+.status-badge.user {
+  background: var(--blue-subtle);
+  color: var(--blue);
 }
 
 /* ============ SCROLLBAR ============ */

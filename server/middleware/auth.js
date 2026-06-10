@@ -3,10 +3,12 @@ const { db } = require('../database/db');
 
 // Middleware untuk autentikasi
 function authenticate(req, res, next) {
-  const token = req.headers.authorization;
-  if (!token) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
   db.get("SELECT * FROM users WHERE token=?", [token], (err, user) => {
     if (err || !user) {

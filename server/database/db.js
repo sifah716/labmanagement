@@ -41,6 +41,8 @@ function initDatabase() {
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       token TEXT,
+      display_name TEXT DEFAULT '',
+      lab TEXT DEFAULT '',
       created_at TEXT NOT NULL
     )`);
 
@@ -99,6 +101,23 @@ function initDatabase() {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )`);
+
+    // Migration: tambah kolom baru ke tabel yang sudah ada (jika belum ada)
+    const migrations = [
+      "ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''",
+      "ALTER TABLE users ADD COLUMN lab TEXT DEFAULT ''",
+      "ALTER TABLE kunjungan ADD COLUMN created_by INTEGER REFERENCES users(id)",
+      "ALTER TABLE kunjungan ADD COLUMN user_lab TEXT DEFAULT ''",
+      "ALTER TABLE peminjaman ADD COLUMN created_by INTEGER REFERENCES users(id)",
+      "ALTER TABLE peminjaman ADD COLUMN user_lab TEXT DEFAULT ''"
+    ];
+    migrations.forEach(function(sql) {
+      db.run(sql, function(err) { if (err) { /* kolom sudah ada, abaikan */ } });
+    });
+
+    // Update default admin & user dengan display_name dan lab
+    db.run("UPDATE users SET display_name='Administrator', lab='IT' WHERE username='admin' AND display_name=''");
+    db.run("UPDATE users SET display_name='User Lab', lab='Lab Komputer' WHERE username='user' AND display_name=''");
 
     // Seed default users
     const adminPassword = hashPassword('admin123');

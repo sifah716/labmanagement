@@ -5,18 +5,36 @@ const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /kunjungan - Get all kunjungan with optional search
+// GET /kunjungan — Get all kunjungan with optional search, filter by user/lab
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
-  let query = "SELECT * FROM kunjungan";
+  const userId = req.query.user_id || '';
+  const lab = req.query.lab || '';
+
+  let query = `
+    SELECT k.*, u.display_name as creator_name, u.lab as creator_lab
+    FROM kunjungan k
+    LEFT JOIN users u ON k.created_by = u.id
+    WHERE 1=1
+  `;
   let params = [];
 
   if (search) {
-    query += " WHERE nama_guru LIKE ? OR kelas_diajar LIKE ?";
-    params = [`%${search}%`, `%${search}%`];
+    query += " AND (k.nama_guru LIKE ? OR k.kelas_diajar LIKE ?)";
+    params.push(`%${search}%`, `%${search}%`);
   }
 
-  query += " ORDER BY tanggal DESC, jam_mulai DESC";
+  if (userId) {
+    query += " AND k.created_by = ?";
+    params.push(parseInt(userId));
+  }
+
+  if (lab) {
+    query += " AND k.user_lab = ?";
+    params.push(lab);
+  }
+
+  query += " ORDER BY k.tanggal DESC, k.jam_mulai DESC";
 
   db.all(query, params, (err, rows) => {
     if (err) {
@@ -26,7 +44,15 @@ router.get("/", authenticate, (req, res) => {
   });
 });
 
-// POST /kunjungan - Create new kunjungan
+// GET /kunjungan/labs — Daftar lab yang punya data kunjungan
+router.get("/labs", authenticate, (req, res) => {
+  db.all("SELECT DISTINCT user_lab as lab FROM kunjungan WHERE user_lab != '' ORDER BY user_lab", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+    res.json(rows || []);
+  });
+});
+
+// POST /kunjungan — Create new kunjungan
 router.post("/", authenticate, (req, res) => {
   const { nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal } = req.body;
   if (!nama_guru || !kelas_diajar || !jam_mulai || !jam_selesai) {
@@ -37,8 +63,8 @@ router.post("/", authenticate, (req, res) => {
   const now = new Date().toISOString();
 
   db.run(
-    "INSERT INTO kunjungan (nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    [nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggalKunjung, now],
+    "INSERT INTO kunjungan (nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal, created_by, user_lab, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    [nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggalKunjung, req.user.id, req.user.lab || '', now],
     function(err) {
       if (err) {
         return res.status(500).json({ error: "Database error", details: err.message });
@@ -48,7 +74,7 @@ router.post("/", authenticate, (req, res) => {
   );
 });
 
-// PUT /kunjungan/:id - Update kunjungan
+// PUT /kunjungan/:id — Update kunjungan
 router.put("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   const { nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal } = req.body;
@@ -74,7 +100,7 @@ router.put("/:id", authenticate, (req, res) => {
   );
 });
 
-// DELETE /kunjungan/:id - Delete kunjungan (Admin only)
+// DELETE /kunjungan/:id — Delete kunjungan (Admin only)
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {

@@ -5,15 +5,19 @@ const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /peminjaman - Get all peminjaman with optional search and status filter
+// GET /peminjaman — Get all peminjaman with optional search, status, user filter
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
   const status = req.query.status || '';
+  const userId = req.query.user_id || '';
+  const lab = req.query.lab || '';
 
   let query = `
-    SELECT p.*, b.nama as barang_nama, b.kode as barang_kode
+    SELECT p.*, b.nama as barang_nama, b.kode as barang_kode,
+           u.display_name as creator_name, u.lab as creator_lab
     FROM peminjaman p
     JOIN barang b ON p.barang_id = b.id
+    LEFT JOIN users u ON p.created_by = u.id
     WHERE 1=1
   `;
   let params = [];
@@ -28,6 +32,16 @@ router.get("/", authenticate, (req, res) => {
     params.push(status);
   }
 
+  if (userId) {
+    query += " AND p.created_by = ?";
+    params.push(parseInt(userId));
+  }
+
+  if (lab) {
+    query += " AND p.user_lab = ?";
+    params.push(lab);
+  }
+
   query += " ORDER BY p.waktu_pinjam DESC";
 
   db.all(query, params, (err, rows) => {
@@ -38,7 +52,15 @@ router.get("/", authenticate, (req, res) => {
   });
 });
 
-// POST /peminjaman - Create new peminjaman
+// GET /peminjaman/labs — Daftar lab yang punya data peminjaman
+router.get("/labs", authenticate, (req, res) => {
+  db.all("SELECT DISTINCT user_lab as lab FROM peminjaman WHERE user_lab != '' ORDER BY user_lab", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+    res.json(rows || []);
+  });
+});
+
+// POST /peminjaman — Create new peminjaman
 router.post("/", authenticate, (req, res) => {
   const { nama, barang_id, jumlah, tanggal } = req.body;
 
@@ -73,9 +95,9 @@ router.post("/", authenticate, (req, res) => {
       }
 
       db.run(`
-        INSERT INTO peminjaman (nama, barang_id, jumlah, status, waktu_pinjam, created_at)
-        VALUES (?, ?, ?, 'dipinjam', ?, ?)
-      `, [nama, barang_id, jumlahInt, waktu_pinjam, now], function(insertErr) {
+        INSERT INTO peminjaman (nama, barang_id, jumlah, status, waktu_pinjam, created_by, user_lab, created_at)
+        VALUES (?, ?, ?, 'dipinjam', ?, ?, ?, ?)
+      `, [nama, barang_id, jumlahInt, waktu_pinjam, req.user.id, req.user.lab || '', now], function(insertErr) {
         if (insertErr) {
           return res.status(500).json({ error: "Database error", details: insertErr.message });
         }
@@ -85,7 +107,7 @@ router.post("/", authenticate, (req, res) => {
   });
 });
 
-// PUT /peminjaman/:id - Return item (mengembalikan barang)
+// PUT /peminjaman/:id — Return item (mengembalikan barang)
 router.put("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {
@@ -124,7 +146,7 @@ router.put("/:id", authenticate, (req, res) => {
   });
 });
 
-// PATCH /peminjaman/:id - Edit peminjaman details (nama, jumlah)
+// PATCH /peminjaman/:id — Edit peminjaman details (nama, jumlah)
 router.patch("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {
@@ -195,7 +217,7 @@ router.patch("/:id", authenticate, (req, res) => {
   });
 });
 
-// DELETE /peminjaman/:id - Delete peminjaman (Admin only)
+// DELETE /peminjaman/:id — Delete peminjaman (Admin only)
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {

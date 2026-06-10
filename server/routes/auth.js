@@ -17,7 +17,7 @@ router.post("/login", (req, res) => {
   const hashedPassword = hashPassword(password);
 
   db.get(
-    "SELECT id, username, role FROM users WHERE username=? AND password=?",
+    "SELECT id, username, role, display_name, lab FROM users WHERE username=? AND password=?",
     [username, hashedPassword],
     (err, user) => {
       if (err) {
@@ -41,7 +41,9 @@ router.post("/login", (req, res) => {
           user: {
             id: user.id,
             username: user.username,
-            role: user.role
+            role: user.role,
+            display_name: user.display_name || user.username,
+            lab: user.lab || ''
           }
         });
       });
@@ -64,7 +66,75 @@ router.get("/me", authenticate, (req, res) => {
   res.json({
     id: req.user.id,
     username: req.user.username,
-    role: req.user.role
+    role: req.user.role,
+    display_name: req.user.display_name || req.user.username,
+    lab: req.user.lab || ''
+  });
+});
+
+// PUT /profile — Edit profil sendiri
+router.put("/profile", authenticate, (req, res) => {
+  const { display_name, lab, current_password, new_password } = req.body;
+
+  if (!display_name && !lab && !new_password) {
+    return res.status(400).json({ error: "Tidak ada data yang diubah" });
+  }
+
+  // Jika mau ganti password, harus isi current_password
+  if (new_password) {
+    if (!current_password) {
+      return res.status(400).json({ error: "Password saat ini harus diisi untuk mengganti password" });
+    }
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: "Password baru minimal 6 karakter" });
+    }
+
+    const hashedCurrent = hashPassword(current_password);
+    if (hashedCurrent !== req.user.password) {
+      return res.status(400).json({ error: "Password saat ini salah" });
+    }
+  }
+
+  const updates = [];
+  const params = [];
+  if (display_name !== undefined) {
+    updates.push("display_name=?");
+    params.push(display_name);
+  }
+  if (lab !== undefined) {
+    updates.push("lab=?");
+    params.push(lab);
+  }
+  if (new_password) {
+    updates.push("password=?");
+    params.push(hashPassword(new_password));
+    // Force re-login: hapus token
+    updates.push("token=NULL");
+  }
+
+  params.push(req.user.id);
+  db.run(`UPDATE users SET ${updates.join(", ")} WHERE id=?`, params, function(err) {
+    if (err) {
+      return res.status(500).json({ error: "Database error" });
+    }
+    // Fetch updated user
+    db.get("SELECT id, username, role, display_name, lab FROM users WHERE id=?", [req.user.id], (err2, user) => {
+      if (err2) {
+        return res.status(500).json({ error: "Database error" });
+      }
+      res.json({
+        success: true,
+        message: new_password ? "Profil dan password berhasil diupdate. Silakan login ulang." : "Profil berhasil diupdate",
+        user: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          display_name: user.display_name || user.username,
+          lab: user.lab || ''
+        },
+        reLogin: !!new_password
+      });
+    });
   });
 });
 

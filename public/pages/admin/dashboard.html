@@ -1,7 +1,7 @@
 <!--
   ADMIN DASHBOARD — Lab Management System
   Path: /pages/admin/dashboard.html
-  Akses: Admin saja (full access)
+  Akses: Admin saja
 -->
 <!DOCTYPE html>
 <html lang="id">
@@ -21,10 +21,7 @@
 
   <script>try { var u=JSON.parse(localStorage.getItem('user')); if (!u||u.role!=='admin') window.location.href='/'; }catch(e){window.location.href='/';}</script>
 
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
-
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
 <body>
@@ -36,25 +33,25 @@
       <p>Dashboard Admin — Manajemen Lengkap</p>
     </div>
     <div class="user-info">
-      <span id="userDisplay"></span>
+      <span id="userDisplay" style="cursor:pointer;" onclick="showProfileModal()" title="Klik untuk edit profil"></span>
       <button onclick="handleLogout()" class="btn-logout">Logout</button>
     </div>
   </div>
 </header>
 
-<!-- NAVIGASI ADMIN -->
 <nav>
   <button data-page="dashboard" onclick="showPage('dashboard')">📊 Dashboard</button>
   <button data-page="kunjungan" onclick="showPage('kunjungan')">👥 Kunjungan</button>
   <button data-page="peminjaman" onclick="showPage('peminjaman')">📦 Peminjaman</button>
   <button data-page="barang" onclick="showPage('barang')">🏷️ Barang</button>
   <button data-page="pengumuman" onclick="showPage('pengumuman')">📢 Pengumuman</button>
+  <button data-page="users" onclick="showPage('users')">👤 Users</button>
   <button data-page="laporan" onclick="showPage('laporan')">📄 Laporan</button>
 </nav>
 
 <main>
 
-<!-- DASHBOARD — Statistik Lengkap -->
+<!-- DASHBOARD -->
 <section id="dashboard" class="page active">
   <div class="stats-grid">
     <div class="stat-card">
@@ -100,18 +97,16 @@
       </div>
     </div>
   </div>
-
   <div class="card">
     <h2>📈 Top 5 Barang Paling Sering Dipinjam</h2>
     <div id="topBarangChart"></div>
   </div>
 </section>
 
-<!-- KUNJUNGAN — Manajemen Data Kunjungan -->
+<!-- KUNJUNGAN -->
 <section id="kunjungan" class="page">
   <div class="card">
     <h2>👥 Data Kunjungan</h2>
-
     <div class="form">
       <input id="namaGuruK" placeholder="Nama Guru" autocomplete="off">
       <input id="kelasDiajarK" placeholder="Kelas yang Diajar" autocomplete="off">
@@ -121,11 +116,15 @@
       <button onclick="tambahKunjungan()" id="btnSubmitKunjungan">➕ Tambah</button>
       <button onclick="cancelEditKunjungan()" id="btnCancelEditK" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
-
     <div class="search-box">
       <input id="searchKunjungan" placeholder="🔍 Cari nama guru atau kelas..." onkeyup="searchKunjungan()" autocomplete="off">
+      <select id="filterKunjunganUser" onchange="searchKunjungan()" style="min-width:160px;">
+        <option value="">Semua User</option>
+      </select>
+      <select id="filterKunjunganLab" onchange="searchKunjungan()" style="min-width:160px;">
+        <option value="">Semua Lab</option>
+      </select>
     </div>
-
     <div class="table-container">
       <table>
         <thead>
@@ -135,6 +134,7 @@
             <th>Tanggal</th>
             <th>Jam Mulai</th>
             <th>Jam Selesai</th>
+            <th>Dibuat Oleh</th>
             <th>Aksi</th>
           </tr>
         </thead>
@@ -144,11 +144,10 @@
   </div>
 </section>
 
-<!-- PEMINJAMAN — Manajemen Data Peminjaman -->
+<!-- PEMINJAMAN -->
 <section id="peminjaman" class="page">
   <div class="card">
     <h2>📦 Data Peminjaman</h2>
-
     <div class="form">
       <input id="namaP" placeholder="Nama" autocomplete="off">
       <select id="barangP">
@@ -158,7 +157,6 @@
       <input id="tanggalP" type="date">
       <button onclick="tambahPeminjaman()">➕ Tambah</button>
     </div>
-
     <div class="filter-box">
       <input id="searchPeminjaman" placeholder="🔍 Cari nama atau barang..." onkeyup="searchPeminjaman()" autocomplete="off">
       <select id="filterStatus" onchange="searchPeminjaman()">
@@ -166,17 +164,23 @@
         <option value="dipinjam">Dipinjam</option>
         <option value="kembali">Kembali</option>
       </select>
+      <select id="filterPeminjamanUser" onchange="searchPeminjaman()" style="min-width:160px;">
+        <option value="">Semua User</option>
+      </select>
+      <select id="filterPeminjamanLab" onchange="searchPeminjaman()" style="min-width:160px;">
+        <option value="">Semua Lab</option>
+      </select>
     </div>
-
     <div class="table-container">
       <table>
         <thead>
           <tr>
             <th>Nama</th>
             <th>Barang</th>
-            <th>Tanggal Pinjam</th>
-            <th>Jumlah</th>
+            <th>Tgl Pinjam</th>
+            <th>Jml</th>
             <th>Status</th>
+            <th>Dibuat Oleh</th>
             <th>Aksi</th>
           </tr>
         </thead>
@@ -186,11 +190,10 @@
   </div>
 </section>
 
-<!-- BARANG — Manajemen Inventori Barang -->
+<!-- BARANG -->
 <section id="barang" class="page">
   <div class="card">
     <h2>🏷️ Data Barang</h2>
-
     <div class="form" id="formBarang">
       <input id="namaBarang" placeholder="Nama Barang" autocomplete="off">
       <input id="kodeBarang" placeholder="Kode Barang" autocomplete="off">
@@ -198,11 +201,9 @@
       <button onclick="tambahBarang()" id="btnSubmitBarang">➕ Tambah</button>
       <button onclick="cancelEditBarang()" id="btnCancelEdit" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
-
     <div class="search-box">
       <input id="searchBarang" placeholder="🔍 Cari nama atau kode barang..." onkeyup="searchBarang()" autocomplete="off">
     </div>
-
     <div class="table-container">
       <table>
         <thead>
@@ -219,18 +220,16 @@
   </div>
 </section>
 
-<!-- PENGUMUMAN — Manajemen Pengumuman -->
+<!-- PENGUMUMAN -->
 <section id="pengumuman" class="page">
   <div class="card">
     <h2>📢 Pengumuman</h2>
-
     <div class="form">
       <input id="judulPengumuman" placeholder="Judul Pengumuman" autocomplete="off">
       <textarea id="deskripsiPengumuman" placeholder="Deskripsi / Isi Pengumuman" rows="4"></textarea>
       <button onclick="tambahPengumuman()" id="btnSubmitPengumuman">➕ Tambah Pengumuman</button>
       <button onclick="cancelEditPengumuman()" id="btnCancelEditP" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
-
     <div class="table-container">
       <table>
         <thead>
@@ -247,23 +246,82 @@
   </div>
 </section>
 
-<!-- LAPORAN — Export dan Cetak Laporan -->
+<!-- USERS — Manajemen User -->
+<section id="users" class="page">
+  <div class="card">
+    <h2>👤 Manajemen User</h2>
+    <div class="form" id="formUser">
+      <input id="userUsername" placeholder="Username" autocomplete="off">
+      <input id="userPassword" placeholder="Password" type="password" autocomplete="off">
+      <input id="userDisplayName" placeholder="Nama Lengkap" autocomplete="off">
+      <input id="userLab" placeholder="Lab (contoh: Lab Komputer)" autocomplete="off">
+      <select id="userRole" style="min-width:120px;">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button onclick="tambahUser()" id="btnSubmitUser">➕ Tambah User</button>
+      <button onclick="cancelEditUser()" id="btnCancelEditUser" class="btn-cancel" style="display:none;">❌ Batal</button>
+    </div>
+    <div class="search-box">
+      <input id="searchUser" placeholder="🔍 Cari user..." onkeyup="searchUser()" autocomplete="off">
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Nama</th>
+            <th>Role</th>
+            <th>Lab</th>
+            <th>Dibuat</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tableUsers"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- LAPORAN -->
 <section id="laporan" class="page">
   <div class="card">
     <h2>📄 Laporan</h2>
-
     <div class="report-buttons">
       <button onclick="exportKunjungan()">📥 Export Kunjungan (CSV)</button>
       <button onclick="exportPeminjaman()">📥 Export Peminjaman (CSV)</button>
       <button onclick="exportBarang()">📥 Export Barang (CSV)</button>
       <button onclick="printReport()">🖨️ Print Laporan</button>
     </div>
-
     <div id="reportPreview" class="report-preview"></div>
   </div>
 </section>
 
 </main>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeProfileModal()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Profil</h3>
+      <button onclick="closeProfileModal()" class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form" style="flex-direction:column;align-items:stretch;">
+        <input id="profileDisplayName" placeholder="Nama Lengkap" autocomplete="off" style="width:100%;">
+        <input id="profileLab" placeholder="Lab (contoh: Lab Komputer)" autocomplete="off" style="width:100%;">
+        <hr style="border:none;border-top:1px solid var(--border);margin:8px 0;">
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Kosongkan password jika tidak ingin mengubah</p>
+        <input id="profileCurPassword" placeholder="Password saat ini" type="password" autocomplete="current-password" style="width:100%;">
+        <input id="profileNewPassword" placeholder="Password baru (min 6 karakter)" type="password" autocomplete="new-password" style="width:100%;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeProfileModal()" class="btn-cancel">Batal</button>
+      <button onclick="saveProfile()" id="btnSaveProfile">Simpan</button>
+    </div>
+  </div>
+</div>
 
 <div id="loadingOverlay" class="loading-overlay" style="display:none;">
   <div class="spinner"></div>
@@ -272,7 +330,7 @@
 <script src="/assets/js/config.js"></script>
 <script src="/assets/js/app.js"></script>
 
-<!-- Nav active state highlighting -->
+<!-- Nav active state -->
 <script>
 document.querySelectorAll('nav button[data-page]').forEach(function(btn) {
   btn.addEventListener('click', function() {
@@ -289,7 +347,6 @@ document.querySelectorAll('nav button[data-page]').forEach(function(btn) {
 })();
 </script>
 
-<!-- PWA Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {

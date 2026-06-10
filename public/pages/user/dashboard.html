@@ -36,7 +36,7 @@
       <p>Dashboard User — Monitoring Kunjungan dan Peminjaman</p>
     </div>
     <div class="user-info">
-      <span id="userDisplay"></span>
+      <span id="userDisplay" style="cursor:pointer;" onclick="showProfileModal()" title="Klik untuk edit profil"></span>
       <button onclick="handleLogout()" class="btn-logout">Logout</button>
     </div>
   </div>
@@ -170,6 +170,30 @@
 </section>
 
 </main>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeProfileModal()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Profil</h3>
+      <button onclick="closeProfileModal()" class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form" style="flex-direction:column;align-items:stretch;">
+        <input id="profileDisplayName" placeholder="Nama Lengkap" autocomplete="off" style="width:100%;">
+        <input id="profileLab" placeholder="Lab (contoh: Lab Komputer)" autocomplete="off" style="width:100%;">
+        <hr style="border:none;border-top:1px solid var(--border);margin:8px 0;">
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Kosongkan password jika tidak ingin mengubah</p>
+        <input id="profileCurPassword" placeholder="Password saat ini" type="password" autocomplete="current-password" style="width:100%;">
+        <input id="profileNewPassword" placeholder="Password baru (min 6 karakter)" type="password" autocomplete="new-password" style="width:100%;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeProfileModal()" class="btn-cancel">Batal</button>
+      <button onclick="saveProfile()" id="btnSaveProfile">Simpan</button>
+    </div>
+  </div>
+</div>
 
 <div id="loadingOverlay" class="loading-overlay" style="display:none;">
   <div class="spinner"></div>

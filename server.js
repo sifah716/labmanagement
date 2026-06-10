@@ -12,6 +12,7 @@ const kunjunganRoutes = require('./server/routes/kunjungan');
 const peminjamanRoutes = require('./server/routes/peminjaman');
 const statsRoutes = require('./server/routes/stats');
 const announcementsRoutes = require('./server/routes/announcements');
+const usersRoutes = require('./server/routes/users');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/kunjungan', kunjunganRoutes);
 app.use('/peminjaman', peminjamanRoutes);
 app.use('/stats', statsRoutes);
 app.use('/announcements', announcementsRoutes);
+app.use('/users', usersRoutes);
 
 // ============ ERROR HANDLING ============
 // 404 handler
