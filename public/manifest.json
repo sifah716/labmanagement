@@ -4,8 +4,8 @@
   "description": "Sistem Manajemen Laboratorium - Monitoring Kunjungan dan Peminjaman",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3498db",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F172A",
   "orientation": "portrait-primary",
   "icons": []
 }

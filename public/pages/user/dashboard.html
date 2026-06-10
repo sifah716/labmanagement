@@ -1,38 +1,29 @@
-<!-- 
-  ===================================
-  USER DASHBOARD
-  ===================================
-  Halaman dashboard untuk User (Regular/Non-Admin)
+<!--
+  USER DASHBOARD — Lab Management System
   Path: /pages/user/dashboard.html
-  Akses: User biasa (tidak memiliki akses admin)
-  
-  FITUR YANG TERSEDIA:
-  ✅ Dashboard - Statistik umum
-  ✅ Kunjungan - Lihat dan catat kunjungan
-  ✅ Peminjaman - Lihat dan catat peminjaman barang
-  
-  FITUR YANG TIDAK TERSEDIA (ADMIN ONLY):
-  ❌ Barang - Manajemen data barang
-  ❌ Laporan - Export dan cetak laporan
-  -->
-
+  Akses: User biasa (non-admin)
+-->
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistem Manajemen Laboratorium - Dashboard User">
-  <meta name="theme-color" content="#667eea">
+  <meta name="theme-color" content="#0F172A">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <title>Dashboard User - Lab Management System</title>
-<script>try { var u=JSON.parse(localStorage.getItem('user')); if (u&&u.role==='admin') window.location.href='/pages/admin/dashboard.html'; }catch(e){}</script>
-  
+
+  <title>Dashboard User — Lab Management System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>try { var u=JSON.parse(localStorage.getItem('user')); if (u&&u.role==='admin') window.location.href='/pages/admin/dashboard.html'; }catch(e){}</script>
+
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
-  
-  
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
@@ -42,7 +33,7 @@
   <div class="header-content">
     <div>
       <h1>Lab Management System</h1>
-      <p>Dashboard User - Monitoring Kunjungan dan Peminjaman</p>
+      <p>Dashboard User — Monitoring Kunjungan dan Peminjaman</p>
     </div>
     <div class="user-info">
       <span id="userDisplay"></span>
@@ -51,16 +42,16 @@
   </div>
 </header>
 
-<!-- NAVIGASI USER: Hanya fitur dasar tanpa menu admin -->
+<!-- NAVIGASI USER -->
 <nav>
-  <button onclick="showPage('dashboard')">📊 Dashboard</button>
-  <button onclick="showPage('kunjungan')">👥 Kunjungan</button>
-  <button onclick="showPage('peminjaman')">📦 Peminjaman</button>
+  <button data-page="dashboard" onclick="showPage('dashboard')">📊 Dashboard</button>
+  <button data-page="kunjungan" onclick="showPage('kunjungan')">👥 Kunjungan</button>
+  <button data-page="peminjaman" onclick="showPage('peminjaman')">📦 Peminjaman</button>
 </nav>
 
 <main>
 
-<!-- DASHBOARD - Statistik Umum -->
+<!-- DASHBOARD — Statistik Umum -->
 <section id="dashboard" class="page active">
   <div class="stats-grid">
     <div class="stat-card">
@@ -70,7 +61,6 @@
         <p>Total Kunjungan</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">📦</div>
       <div class="stat-info">
@@ -78,7 +68,6 @@
         <p>Total Peminjaman</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">⏳</div>
       <div class="stat-info">
@@ -86,7 +75,6 @@
         <p>Peminjaman Aktif</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">📅</div>
       <div class="stat-info">
@@ -95,14 +83,14 @@
       </div>
     </div>
   </div>
-  
-  <div class="card" style="margin-top: 20px;">
+
+  <div class="card">
     <h2>📈 Top 5 Barang Paling Sering Dipinjam</h2>
     <div id="topBarangChart"></div>
   </div>
 </section>
 
-<!-- KUNJUNGAN - Manajemen Data Kunjungan -->
+<!-- KUNJUNGAN — Manajemen Data Kunjungan -->
 <section id="kunjungan" class="page">
   <div class="card">
     <h2>👥 Data Kunjungan</h2>
@@ -114,16 +102,11 @@
       <input id="jamSelesaiK" type="time" placeholder="Jam Selesai">
       <input id="tanggalK" type="date">
       <button onclick="tambahKunjungan()" id="btnSubmitKunjungan">➕ Tambah</button>
-      <button onclick="cancelEditKunjungan()" id="btnCancelEditK" style="display:none; background:#95a5a6;">❌ Batal</button>
+      <button onclick="cancelEditKunjungan()" id="btnCancelEditK" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
-    
+
     <div class="search-box">
-      <input 
-        id="searchKunjungan" 
-        placeholder="🔍 Cari nama guru atau kelas..." 
-        onkeyup="searchKunjungan()"
-        autocomplete="off"
-      >
+      <input id="searchKunjungan" placeholder="🔍 Cari nama guru atau kelas..." onkeyup="searchKunjungan()" autocomplete="off">
     </div>
 
     <div class="table-container">
@@ -144,7 +127,7 @@
   </div>
 </section>
 
-<!-- PEMINJAMAN - Manajemen Data Peminjaman -->
+<!-- PEMINJAMAN — Manajemen Data Peminjaman -->
 <section id="peminjaman" class="page">
   <div class="card">
     <h2>📦 Data Peminjaman</h2>
@@ -158,14 +141,9 @@
       <input id="tanggalP" type="date">
       <button onclick="tambahPeminjaman()">➕ Tambah</button>
     </div>
-    
+
     <div class="filter-box">
-      <input 
-        id="searchPeminjaman" 
-        placeholder="🔍 Cari nama atau barang..." 
-        onkeyup="searchPeminjaman()"
-        autocomplete="off"
-      >
+      <input id="searchPeminjaman" placeholder="🔍 Cari nama atau barang..." onkeyup="searchPeminjaman()" autocomplete="off">
       <select id="filterStatus" onchange="searchPeminjaman()">
         <option value="">Semua Status</option>
         <option value="dipinjam">Dipinjam</option>
@@ -200,17 +178,30 @@
 <script src="/assets/js/config.js"></script>
 <script src="/assets/js/app.js"></script>
 
+<!-- Nav active state highlighting -->
+<script>
+document.querySelectorAll('nav button[data-page]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('nav button[data-page]').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+(function() {
+  var ap = document.querySelector('.page.active');
+  if (ap) {
+    var btn = document.querySelector('nav button[data-page="' + ap.id + '"]');
+    if (btn) btn.classList.add('active');
+  }
+})();
+</script>
+
 <!-- PWA Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
+    window.addEventListener('load', function() {
       navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('✓ Service Worker registered:', registration);
-        })
-        .catch(error => {
-          console.log('✗ Service Worker registration failed:', error);
-        });
+        .then(function(registration) { console.log('✓ Service Worker registered:', registration); })
+        .catch(function(error) { console.log('✗ Service Worker registration failed:', error); });
     });
   }
 </script>

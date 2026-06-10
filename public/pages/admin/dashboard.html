@@ -1,36 +1,29 @@
-<!-- 
-  ===================================
-  ADMIN DASHBOARD
-  ===================================
-  Halaman dashboard untuk Administrator
+<!--
+  ADMIN DASHBOARD — Lab Management System
   Path: /pages/admin/dashboard.html
   Akses: Admin saja (full access)
-  
-  FITUR YANG TERSEDIA (ADMIN ONLY):
-  ✅ Dashboard - Statistik lengkap + Top barang
-  ✅ Kunjungan - Manajemen data kunjungan
-  ✅ Peminjaman - Manajemen data peminjaman
-  ✅ Barang - Manajemen inventori barang
-  ✅ Laporan - Export dan cetak laporan
-  -->
-
+-->
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Sistem Manajemen Laboratorium - Dashboard Admin">
-  <meta name="theme-color" content="#667eea">
+  <meta name="theme-color" content="#0F172A">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <title>Dashboard Admin - Lab Management System</title>
-<script>try { var u=JSON.parse(localStorage.getItem('user')); if (!u||u.role!=='admin') window.location.href='/'; }catch(e){window.location.href='/';}</script>
-  
+
+  <title>Dashboard Admin — Lab Management System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>try { var u=JSON.parse(localStorage.getItem('user')); if (!u||u.role!=='admin') window.location.href='/'; }catch(e){window.location.href='/';}</script>
+
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
-  
-  
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="/assets/css/main.css">
 </head>
@@ -40,7 +33,7 @@
   <div class="header-content">
     <div>
       <h1>Lab Management System</h1>
-      <p>Dashboard Admin - Manajemen Lengkap</p>
+      <p>Dashboard Admin — Manajemen Lengkap</p>
     </div>
     <div class="user-info">
       <span id="userDisplay"></span>
@@ -49,19 +42,19 @@
   </div>
 </header>
 
-<!-- NAVIGASI ADMIN: Semua fitur termasuk admin features -->
+<!-- NAVIGASI ADMIN -->
 <nav>
-  <button onclick="showPage('dashboard')">📊 Dashboard</button>
-  <button onclick="showPage('kunjungan')">👥 Kunjungan</button>
-  <button onclick="showPage('peminjaman')">📦 Peminjaman</button>
-  <button onclick="showPage('barang')">🏷️ Barang</button>
-  <button onclick="showPage('pengumuman')">📢 Pengumuman</button>
-  <button onclick="showPage('laporan')">📄 Laporan</button>
+  <button data-page="dashboard" onclick="showPage('dashboard')">📊 Dashboard</button>
+  <button data-page="kunjungan" onclick="showPage('kunjungan')">👥 Kunjungan</button>
+  <button data-page="peminjaman" onclick="showPage('peminjaman')">📦 Peminjaman</button>
+  <button data-page="barang" onclick="showPage('barang')">🏷️ Barang</button>
+  <button data-page="pengumuman" onclick="showPage('pengumuman')">📢 Pengumuman</button>
+  <button data-page="laporan" onclick="showPage('laporan')">📄 Laporan</button>
 </nav>
 
 <main>
 
-<!-- DASHBOARD - Statistik Lengkap untuk Admin -->
+<!-- DASHBOARD — Statistik Lengkap -->
 <section id="dashboard" class="page active">
   <div class="stats-grid">
     <div class="stat-card">
@@ -71,7 +64,6 @@
         <p>Total Kunjungan</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">📦</div>
       <div class="stat-info">
@@ -79,7 +71,6 @@
         <p>Total Peminjaman</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">⏳</div>
       <div class="stat-info">
@@ -87,7 +78,6 @@
         <p>Peminjaman Aktif</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">🏷️</div>
       <div class="stat-info">
@@ -95,7 +85,6 @@
         <p>Total Barang</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">⚠️</div>
       <div class="stat-info">
@@ -103,7 +92,6 @@
         <p>Stok Rendah</p>
       </div>
     </div>
-    
     <div class="stat-card">
       <div class="stat-icon">📅</div>
       <div class="stat-info">
@@ -112,14 +100,14 @@
       </div>
     </div>
   </div>
-  
-  <div class="card" style="margin-top: 20px;">
+
+  <div class="card">
     <h2>📈 Top 5 Barang Paling Sering Dipinjam</h2>
     <div id="topBarangChart"></div>
   </div>
 </section>
 
-<!-- KUNJUNGAN - Manajemen Data Kunjungan -->
+<!-- KUNJUNGAN — Manajemen Data Kunjungan -->
 <section id="kunjungan" class="page">
   <div class="card">
     <h2>👥 Data Kunjungan</h2>
@@ -131,16 +119,11 @@
       <input id="jamSelesaiK" type="time" placeholder="Jam Selesai">
       <input id="tanggalK" type="date">
       <button onclick="tambahKunjungan()" id="btnSubmitKunjungan">➕ Tambah</button>
-      <button onclick="cancelEditKunjungan()" id="btnCancelEditK" style="display:none; background:#95a5a6;">❌ Batal</button>
+      <button onclick="cancelEditKunjungan()" id="btnCancelEditK" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
-    
+
     <div class="search-box">
-      <input 
-        id="searchKunjungan" 
-        placeholder="🔍 Cari nama guru atau kelas..." 
-        onkeyup="searchKunjungan()"
-        autocomplete="off"
-      >
+      <input id="searchKunjungan" placeholder="🔍 Cari nama guru atau kelas..." onkeyup="searchKunjungan()" autocomplete="off">
     </div>
 
     <div class="table-container">
@@ -161,7 +144,7 @@
   </div>
 </section>
 
-<!-- PEMINJAMAN - Manajemen Data Peminjaman -->
+<!-- PEMINJAMAN — Manajemen Data Peminjaman -->
 <section id="peminjaman" class="page">
   <div class="card">
     <h2>📦 Data Peminjaman</h2>
@@ -175,14 +158,9 @@
       <input id="tanggalP" type="date">
       <button onclick="tambahPeminjaman()">➕ Tambah</button>
     </div>
-    
+
     <div class="filter-box">
-      <input 
-        id="searchPeminjaman" 
-        placeholder="🔍 Cari nama atau barang..." 
-        onkeyup="searchPeminjaman()"
-        autocomplete="off"
-      >
+      <input id="searchPeminjaman" placeholder="🔍 Cari nama atau barang..." onkeyup="searchPeminjaman()" autocomplete="off">
       <select id="filterStatus" onchange="searchPeminjaman()">
         <option value="">Semua Status</option>
         <option value="dipinjam">Dipinjam</option>
@@ -208,7 +186,7 @@
   </div>
 </section>
 
-<!-- BARANG - Manajemen Inventori Barang (ADMIN ONLY) -->
+<!-- BARANG — Manajemen Inventori Barang -->
 <section id="barang" class="page">
   <div class="card">
     <h2>🏷️ Data Barang</h2>
@@ -218,16 +196,11 @@
       <input id="kodeBarang" placeholder="Kode Barang" autocomplete="off">
       <input id="stokBarang" placeholder="Stok" type="number" min="0">
       <button onclick="tambahBarang()" id="btnSubmitBarang">➕ Tambah</button>
-      <button onclick="cancelEditBarang()" id="btnCancelEdit" style="display:none; background:#95a5a6;">❌ Batal</button>
+      <button onclick="cancelEditBarang()" id="btnCancelEdit" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
-    
+
     <div class="search-box">
-      <input 
-        id="searchBarang" 
-        placeholder="🔍 Cari nama atau kode barang..." 
-        onkeyup="searchBarang()"
-        autocomplete="off"
-      >
+      <input id="searchBarang" placeholder="🔍 Cari nama atau kode barang..." onkeyup="searchBarang()" autocomplete="off">
     </div>
 
     <div class="table-container">
@@ -246,16 +219,16 @@
   </div>
 </section>
 
-<!-- PENGUMUMAN - Manajemen Pengumuman (ADMIN ONLY) -->
+<!-- PENGUMUMAN — Manajemen Pengumuman -->
 <section id="pengumuman" class="page">
   <div class="card">
     <h2>📢 Pengumuman</h2>
 
     <div class="form">
       <input id="judulPengumuman" placeholder="Judul Pengumuman" autocomplete="off">
-      <textarea id="deskripsiPengumuman" placeholder="Deskripsi / Isi Pengumuman" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;"></textarea>
+      <textarea id="deskripsiPengumuman" placeholder="Deskripsi / Isi Pengumuman" rows="4"></textarea>
       <button onclick="tambahPengumuman()" id="btnSubmitPengumuman">➕ Tambah Pengumuman</button>
-      <button onclick="cancelEditPengumuman()" id="btnCancelEditP" style="display:none; background:#95a5a6;">❌ Batal</button>
+      <button onclick="cancelEditPengumuman()" id="btnCancelEditP" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
 
     <div class="table-container">
@@ -274,18 +247,18 @@
   </div>
 </section>
 
-<!-- LAPORAN - Export dan Cetak Laporan (ADMIN ONLY) -->
+<!-- LAPORAN — Export dan Cetak Laporan -->
 <section id="laporan" class="page">
   <div class="card">
     <h2>📄 Laporan</h2>
-    
+
     <div class="report-buttons">
       <button onclick="exportKunjungan()">📥 Export Kunjungan (CSV)</button>
       <button onclick="exportPeminjaman()">📥 Export Peminjaman (CSV)</button>
       <button onclick="exportBarang()">📥 Export Barang (CSV)</button>
       <button onclick="printReport()">🖨️ Print Laporan</button>
     </div>
-    
+
     <div id="reportPreview" class="report-preview"></div>
   </div>
 </section>
@@ -299,17 +272,30 @@
 <script src="/assets/js/config.js"></script>
 <script src="/assets/js/app.js"></script>
 
+<!-- Nav active state highlighting -->
+<script>
+document.querySelectorAll('nav button[data-page]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('nav button[data-page]').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+(function() {
+  var ap = document.querySelector('.page.active');
+  if (ap) {
+    var btn = document.querySelector('nav button[data-page="' + ap.id + '"]');
+    if (btn) btn.classList.add('active');
+  }
+})();
+</script>
+
 <!-- PWA Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
+    window.addEventListener('load', function() {
       navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('✓ Service Worker registered:', registration);
-        })
-        .catch(error => {
-          console.log('✗ Service Worker registration failed:', error);
-        });
+        .then(function(registration) { console.log('✓ Service Worker registered:', registration); })
+        .catch(function(error) { console.log('✗ Service Worker registration failed:', error); });
     });
   }
 </script>
