@@ -1344,13 +1344,11 @@ function toggleNotifications() {
   notifOpen = !notifOpen;
   
   if (notifOpen) {
-    const btn = document.getElementById('notifBtn');
-    const rect = btn.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
+    const userInfo = document.querySelector('.user-info');
+    const rect = userInfo.getBoundingClientRect();
     dd.style.position = 'fixed';
     dd.style.top = (rect.bottom + 8) + 'px';
-    dd.style.left = centerX + 'px';
-    dd.style.transform = 'translateX(-50%)';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
     dd.classList.add('show');
     loadNotifications();
     markNotifRead();
@@ -1358,8 +1356,7 @@ function toggleNotifications() {
     dd.classList.remove('show');
     dd.style.position = '';
     dd.style.top = '';
-    dd.style.left = '';
-    dd.style.transform = '';
+    dd.style.right = '';
   }
 }
 

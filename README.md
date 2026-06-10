@@ -1,4 +1,4 @@
-# Lab Management System v2.6
+# Lab Management System v2.7
 
 Sistem manajemen laboratorium berbasis web untuk monitoring kunjungan guru, peminjaman peralatan, manajemen user, dan stok barang.
 
@@ -305,4 +305,4 @@ Backend dibangun dengan arsitektur modular untuk mudah dikembangkan dan dipeliha
 
 ### PWA
 - **manifest.json** — Installable app metadata
-- **service-worker.js** — Cache management (v2.6)
+- **service-worker.js** — Cache management (v2.7)
