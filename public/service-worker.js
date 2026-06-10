@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lab-manager-v2.4';
+const CACHE_NAME = 'lab-manager-v2.5';
 const urlsToCache = [
   '/',
   '/assets/css/main.css',

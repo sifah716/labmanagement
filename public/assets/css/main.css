@@ -87,6 +87,7 @@ header {
   color: white;
   padding: 0;
   position: relative;
+  z-index: 200;
 }
 
 header::before {
@@ -187,9 +188,6 @@ header p {
 
 .notif-dropdown {
   display: none;
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
   width: 360px;
   max-height: 420px;
   background: var(--bg-card);
@@ -1462,6 +1460,8 @@ tr:hover td {
   .info-section { grid-template-columns: 1fr; gap: 16px; }
   .announcement-card, .info-card, .tips-card { padding: 20px; }
   .login-box, .auth-box { padding: 28px 24px; }
+
+  .notif-dropdown { width: calc(100vw - 32px); max-width: 360px; right: 16px !important; }
 }
 
 @media (max-width: 480px) {

@@ -1342,10 +1342,19 @@ let notifOpen = false;
 function toggleNotifications() {
   const dd = document.getElementById('notifDropdown');
   notifOpen = !notifOpen;
-  dd.classList.toggle('show', notifOpen);
+  
   if (notifOpen) {
+    // Position dropdown relative to viewport
+    const btn = document.getElementById('notifBtn');
+    const rect = btn.getBoundingClientRect();
+    dd.style.position = 'fixed';
+    dd.style.top = (rect.bottom + 8) + 'px';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
+    dd.classList.add('show');
     loadNotifications();
     markNotifRead();
+  } else {
+    dd.classList.remove('show');
   }
 }
 
@@ -1356,6 +1365,14 @@ document.addEventListener('click', function(e) {
     notifOpen = false;
   }
 });
+
+// Close on scroll
+document.addEventListener('scroll', function() {
+  if (notifOpen) {
+    document.getElementById('notifDropdown').classList.remove('show');
+    notifOpen = false;
+  }
+}, { passive: true });
 
 async function loadNotifications() {
   try {
