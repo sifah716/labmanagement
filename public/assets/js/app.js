@@ -369,8 +369,8 @@ async function loadKunjungan(search = '', userFilter = '', labFilter = '') {
           <td>${item.jam_selesai}</td>
           ${isAdmin ? `<td>${item.user_lab || item.display_name || '-'}</td>` : ''}
           <td>
-            <button onclick="editKunjungan(${item.id})" class="btn-primary">✏️ Edit</button>
-            ${isAdmin ? `<button onclick="hapusKunjungan(${item.id})" class="btn-delete">🗑️ Hapus</button>` : ''}
+            <button onclick="editKunjungan(${item.id})" class="btn-primary">Edit</button>
+            ${isAdmin ? `<button onclick="hapusKunjungan(${item.id})" class="btn-delete">Hapus</button>` : ''}
           </td>
         </tr>`;
       });
@@ -508,10 +508,10 @@ async function loadPeminjaman(search = '', status = '', userFilter = '', labFilt
           ${isAdmin ? `<td>${item.user_lab || item.display_name || '-'}</td>` : ''}
           <td>
             ${item.status === 'dipinjam' ? 
-              `<button onclick="kembaliPeminjaman(${item.id})" class="btn-primary">✓ Kembali</button>` : 
+              `<button onclick="kembaliPeminjaman(${item.id})" class="btn-primary">Kembali</button>` : 
               ''}
-            ${isAdmin && item.status === 'dipinjam' ? `<button onclick="editPeminjaman(${item.id})" class="btn-primary">✏️ Edit</button>` : ''}
-            ${isAdmin ? `<button onclick="hapusPeminjaman(${item.id})" class="btn-delete">🗑️ Hapus</button>` : ''}
+            ${isAdmin && item.status === 'dipinjam' ? `<button onclick="editPeminjaman(${item.id})" class="btn-primary">Edit</button>` : ''}
+            ${isAdmin ? `<button onclick="hapusPeminjaman(${item.id})" class="btn-delete">Hapus</button>` : ''}
           </td>
         </tr>`;
       });
@@ -677,8 +677,8 @@ async function loadBarang(search = '') {
           <td>${item.kode}</td>
           <td class="${stokClass}">${item.stok}</td>
           <td>
-            <button onclick="editBarang(${item.id})" class="btn-primary">✏️ Edit</button>
-            <button onclick="hapusBarang(${item.id})" class="btn-delete">🗑️ Hapus</button>
+            <button onclick="editBarang(${item.id})" class="btn-primary">Edit</button>
+            <button onclick="hapusBarang(${item.id})" class="btn-delete">Hapus</button>
           </td>
         </tr>`;
       });
@@ -935,8 +935,8 @@ async function loadPengumuman() {
           <td>${deskripsi}</td>
           <td>${formatDateTime(item.updated_at)}</td>
           <td>
-            <button onclick="editPengumuman(${item.id})" class="btn-primary">✏️ Edit</button>
-            <button onclick="hapusPengumuman(${item.id})" class="btn-delete">🗑️ Hapus</button>
+            <button onclick="editPengumuman(${item.id})" class="btn-primary">Edit</button>
+            <button onclick="hapusPengumuman(${item.id})" class="btn-delete">Hapus</button>
           </td>
         </tr>`;
       });
@@ -1114,8 +1114,8 @@ async function loadUsers(search = '') {
           <td>${u.lab || '-'}</td>
           <td>${createdDate}</td>
           <td>
-            <button onclick="editUser(${u.id})" class="btn-primary">✏️ Edit</button>
-            ${u.username !== 'admin' ? `<button onclick="hapusUser(${u.id})" class="btn-delete">🗑️ Hapus</button>` : ''}
+            <button onclick="editUser(${u.id})" class="btn-primary">Edit</button>
+            ${u.username !== 'admin' ? `<button onclick="hapusUser(${u.id})" class="btn-delete">Hapus</button>` : ''}
           </td>
         </tr>`;
       });
@@ -1213,7 +1213,7 @@ async function editUser(id) {
     document.getElementById('userRole').value = user.role;
     document.getElementById('userPassword').value = '';
     document.getElementById('userPassword').placeholder = 'Kosongkan jika tidak diganti';
-    document.getElementById('btnSubmitUser').textContent = '✏️ Update User';
+    document.getElementById('btnSubmitUser').textContent = 'Update User';
     document.getElementById('btnCancelEditUser').style.display = 'inline-block';
     document.getElementById('formUser').scrollIntoView({ behavior: 'smooth' });
   } catch (error) {
@@ -1263,8 +1263,8 @@ async function loadResetRequests() {
         <td><strong>${r.username}</strong></td>
         <td>${time}</td>
         <td>
-          <button onclick="approveResetRequest(${r.id})" class="btn-primary" style="background:var(--success)">✓ Setujui</button>
-          <button onclick="denyResetRequest(${r.id})" class="btn-delete">✕ Tolak</button>
+          <button onclick="approveResetRequest(${r.id})" class="btn-primary" style="background:var(--success)">Setujui</button>
+          <button onclick="denyResetRequest(${r.id})" class="btn-delete">Tolak</button>
         </td>
       </tr>`;
     });
