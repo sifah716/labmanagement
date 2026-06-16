@@ -29,7 +29,7 @@
   <div class="header-content">
     <div>
       <h1>Lab Management System</h1>
-      <p>Dashboard User — Monitoring Kunjungan dan Peminjaman</p>
+      <p>SMK Darut Taqwa</p>
     </div>
     <div class="user-info">
       <span id="userDisplay" style="cursor:pointer;" onclick="showProfileModal()" title="Klik untuk edit profil"></span>
@@ -39,9 +39,9 @@
 </header>
 
 <nav>
-  <button data-page="dashboard" onclick="showPage('dashboard')">📊 Dashboard</button>
-  <button data-page="kunjungan" onclick="showPage('kunjungan')">👥 Kunjungan</button>
-  <button data-page="peminjaman" onclick="showPage('peminjaman')">📦 Peminjaman</button>
+  <button data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+  <button data-page="kunjungan" onclick="showPage('kunjungan')">Kunjungan</button>
+  <button data-page="peminjaman" onclick="showPage('peminjaman')">Peminjaman</button>
 </nav>
 
 <main>
@@ -79,14 +79,14 @@
   </div>
 
   <div class="card">
-    <h2>📈 Top 5 Barang Paling Sering Dipinjam</h2>
+    <h2>Top 5 Barang Paling Sering Dipinjam</h2>
     <div id="topBarangChart"></div>
   </div>
 </section>
 
 <section id="kunjungan" class="page">
   <div class="card">
-    <h2>👥 Data Kunjungan</h2>
+    <h2>Data Kunjungan</h2>
 
     <div class="form">
       <input id="namaGuruK" placeholder="Nama Guru" autocomplete="off">
@@ -99,7 +99,7 @@
     </div>
 
     <div class="search-box">
-      <input id="searchKunjungan" placeholder="🔍 Cari nama guru atau kelas..." onkeyup="searchKunjungan()" autocomplete="off">
+      <input id="searchKunjungan" placeholder="Cari nama guru atau kelas..." onkeyup="searchKunjungan()" autocomplete="off">
     </div>
 
     <div class="table-container">
@@ -122,7 +122,7 @@
 
 <section id="peminjaman" class="page">
   <div class="card">
-    <h2>📦 Data Peminjaman</h2>
+    <h2>Data Peminjaman</h2>
 
     <div class="form">
       <input id="namaP" placeholder="Nama" autocomplete="off">
@@ -135,7 +135,7 @@
     </div>
 
     <div class="filter-box">
-      <input id="searchPeminjaman" placeholder="🔍 Cari nama atau barang..." onkeyup="searchPeminjaman()" autocomplete="off">
+      <input id="searchPeminjaman" placeholder="Cari nama atau barang..." onkeyup="searchPeminjaman()" autocomplete="off">
       <select id="filterStatus" onchange="searchPeminjaman()">
         <option value="">Semua Status</option>
         <option value="dipinjam">Dipinjam</option>

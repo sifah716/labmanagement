@@ -19,7 +19,7 @@ function checkAuth() {
   
   currentUser = JSON.parse(userStr);
   document.getElementById('userDisplay').textContent = 
-    `${currentUser.role === 'admin' ? '👑' : '👤'} ${currentUser.display_name || currentUser.username}`;
+    `${currentUser.display_name || currentUser.username}`;
 
   if (currentUser.role === 'admin') {
     const btnBarang = document.getElementById('btnBarang');
@@ -214,10 +214,10 @@ async function loadDashboard() {
         }
         
         document.getElementById('dashboard').innerHTML = `
-          <h2>📋 Dashboard</h2>
+          <h2>Dashboard</h2>
           <div class="info-section">
             <div class="announcement-card">
-              <h3>📢 Pengumuman</h3>
+              <h3>Pengumuman</h3>
               <div class="announcement-slider" id="announcementSlider">
                 <div class="slide-track">${slidesHTML}</div>
                 ${dotsHTML ? `<div class="slider-dots">${dotsHTML}</div>` : ''}
@@ -226,17 +226,17 @@ async function loadDashboard() {
             </div>
             
             <div class="info-card">
-              <h3>ℹ️ Informasi Penting</h3>
+              <h3>Informasi Penting</h3>
               <ul class="info-list">
-                <li>✓ Pastikan mengisi form kunjungan setiap kali mengajar di lab</li>
-                <li>✓ Peralatan yang dipinjam harus dikembalikan tepat waktu</li>
-                <li>✓ Hubungi admin jika ada kendala atau pertanyaan</li>
-                <li>✓ Jaga kebersihan dan keamanan laboratorium</li>
+                <li>Pastikan mengisi form kunjungan setiap kali mengajar di lab</li>
+                <li>Peralatan yang dipinjam harus dikembalikan tepat waktu</li>
+                <li>Hubungi admin jika ada kendala atau pertanyaan</li>
+                <li>Jaga kebersihan dan keamanan laboratorium</li>
               </ul>
             </div>
             
             <div class="tips-card">
-              <h3>💡 Tips Penggunaan</h3>
+              <h3>Tips Penggunaan</h3>
               <ul class="info-list">
                 <li><strong>Kunjungan:</strong> Isi nama guru, kelas yang diajar, dan jam mulai-selesai</li>
                 <li><strong>Peminjaman:</strong> Pilih barang yang tersedia dan tentukan jumlah</li>
@@ -252,10 +252,10 @@ async function loadDashboard() {
       } catch (error) {
 
         document.getElementById('dashboard').innerHTML = `
-          <h2>📋 Dashboard</h2>
+          <h2>Dashboard</h2>
           <div class="info-section">
             <div class="announcement-card">
-              <h3>📢 Pengumuman</h3>
+              <h3>Pengumuman</h3>
               <div class="announcement-slider">
                 <div class="slide-track">
                   <div class="slide active">
@@ -270,17 +270,17 @@ async function loadDashboard() {
             </div>
             
             <div class="info-card">
-              <h3>ℹ️ Informasi Penting</h3>
+              <h3>Informasi Penting</h3>
               <ul class="info-list">
-                <li>✓ Pastikan mengisi form kunjungan setiap kali mengajar di lab</li>
-                <li>✓ Peralatan yang dipinjam harus dikembalikan tepat waktu</li>
-                <li>✓ Hubungi admin jika ada kendala atau pertanyaan</li>
-                <li>✓ Jaga kebersihan dan keamanan laboratorium</li>
+                <li>Pastikan mengisi form kunjungan setiap kali mengajar di lab</li>
+                <li>Peralatan yang dipinjam harus dikembalikan tepat waktu</li>
+                <li>Hubungi admin jika ada kendala atau pertanyaan</li>
+                <li>Jaga kebersihan dan keamanan laboratorium</li>
               </ul>
             </div>
             
             <div class="tips-card">
-              <h3>💡 Tips Penggunaan</h3>
+              <h3>Tips Penggunaan</h3>
               <ul class="info-list">
                 <li><strong>Kunjungan:</strong> Isi nama guru, kelas yang diajar, dan jam mulai-selesai</li>
                 <li><strong>Peminjaman:</strong> Pilih barang yang tersedia dan tentukan jumlah</li>
@@ -1078,7 +1078,7 @@ async function saveProfile() {
     localStorage.setItem('user', JSON.stringify(user));
 
     document.getElementById('userDisplay').textContent = 
-      `${user.role === 'admin' ? '👑' : '👤'} ${result.user.display_name || display_name}`;
+      `${result.user.display_name || display_name}`;
     
     showNotification('Profil berhasil diperbarui', 'success');
     closeProfileModal();

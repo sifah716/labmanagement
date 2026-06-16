@@ -29,7 +29,7 @@
       </div>
 
       <div class="login-info">
-        <strong>📝 Catatan:</strong>
+        <strong>Catatan:</strong>
         <div>Gunakan akun yang telah terdaftar untuk login</div>
       </div>
     </div>
@@ -37,7 +37,6 @@
 
   <script src="/assets/js/config.js"></script>
   <script>
-    // Check if already logged in
     if (localStorage.getItem('token')) {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.role === 'admin') {

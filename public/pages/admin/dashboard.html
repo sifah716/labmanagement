@@ -26,7 +26,7 @@
   <div class="header-content">
     <div>
       <h1>Lab Management System</h1>
-      <p>Dashboard Admin — Manajemen Lengkap</p>
+      <p>SMK Darut Taqwa</p>
     </div>
     <div class="user-info">
       <div class="notif-btn" id="notifBtn" onclick="toggleNotifications()" title="Notifikasi">
@@ -44,13 +44,13 @@
 </header>
 
 <nav>
-  <button data-page="dashboard" onclick="showPage('dashboard')">📊 Dashboard</button>
-  <button data-page="kunjungan" onclick="showPage('kunjungan')">👥 Kunjungan</button>
-  <button data-page="peminjaman" onclick="showPage('peminjaman')">📦 Peminjaman</button>
-  <button data-page="barang" onclick="showPage('barang')">🏷️ Barang</button>
-  <button data-page="pengumuman" onclick="showPage('pengumuman')">📢 Pengumuman</button>
-  <button data-page="users" onclick="showPage('users')">👤 Users <span id="resetBadge" class="nav-badge" style="display:none;"></span></button>
-  <button data-page="laporan" onclick="showPage('laporan')">📄 Laporan</button>
+  <button data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+  <button data-page="kunjungan" onclick="showPage('kunjungan')">Kunjungan</button>
+  <button data-page="peminjaman" onclick="showPage('peminjaman')">Peminjaman</button>
+  <button data-page="barang" onclick="showPage('barang')">Barang</button>
+  <button data-page="pengumuman" onclick="showPage('pengumuman')">Pengumuman</button>
+  <button data-page="users" onclick="showPage('users')">Users <span id="resetBadge" class="nav-badge" style="display:none;"></span></button>
+  <button data-page="laporan" onclick="showPage('laporan')">Laporan</button>
 </nav>
 
 <main>
@@ -101,14 +101,14 @@
     </div>
   </div>
   <div class="card">
-    <h2>📈 Top 5 Barang Paling Sering Dipinjam</h2>
+    <h2>Top 5 Barang Paling Sering Dipinjam</h2>
     <div id="topBarangChart"></div>
   </div>
 </section>
 
 <section id="kunjungan" class="page">
   <div class="card">
-    <h2>👥 Data Kunjungan</h2>
+    <h2>Data Kunjungan</h2>
     <div class="form">
       <input id="namaGuruK" placeholder="Nama Guru" autocomplete="off">
       <input id="kelasDiajarK" placeholder="Kelas yang Diajar" autocomplete="off">
@@ -119,7 +119,7 @@
       <button onclick="cancelEditKunjungan()" id="btnCancelEditK" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
     <div class="search-box">
-      <input id="searchKunjungan" placeholder="🔍 Cari nama guru atau kelas..." onkeyup="searchKunjungan()" autocomplete="off">
+      <input id="searchKunjungan" placeholder="Cari nama guru atau kelas..." onkeyup="searchKunjungan()" autocomplete="off">
       <select id="filterKunjunganUser" onchange="searchKunjungan()" style="min-width:160px;">
         <option value="">Semua User</option>
       </select>
@@ -148,7 +148,7 @@
 
 <section id="peminjaman" class="page">
   <div class="card">
-    <h2>📦 Data Peminjaman</h2>
+    <h2>Data Peminjaman</h2>
     <div class="form">
       <input id="namaP" placeholder="Nama" autocomplete="off">
       <select id="barangP">
@@ -159,7 +159,7 @@
       <button onclick="tambahPeminjaman()">➕ Tambah</button>
     </div>
     <div class="filter-box">
-      <input id="searchPeminjaman" placeholder="🔍 Cari nama atau barang..." onkeyup="searchPeminjaman()" autocomplete="off">
+      <input id="searchPeminjaman" placeholder="Cari nama atau barang..." onkeyup="searchPeminjaman()" autocomplete="off">
       <select id="filterStatus" onchange="searchPeminjaman()">
         <option value="">Semua Status</option>
         <option value="dipinjam">Dipinjam</option>
@@ -193,7 +193,7 @@
 
 <section id="barang" class="page">
   <div class="card">
-    <h2>🏷️ Data Barang</h2>
+    <h2>Data Barang</h2>
     <div class="form" id="formBarang">
       <input id="namaBarang" placeholder="Nama Barang" autocomplete="off">
       <input id="kodeBarang" placeholder="Kode Barang" autocomplete="off">
@@ -202,7 +202,7 @@
       <button onclick="cancelEditBarang()" id="btnCancelEdit" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
     <div class="search-box">
-      <input id="searchBarang" placeholder="🔍 Cari nama atau kode barang..." onkeyup="searchBarang()" autocomplete="off">
+      <input id="searchBarang" placeholder="Cari nama atau kode barang..." onkeyup="searchBarang()" autocomplete="off">
     </div>
     <div class="table-container">
       <table>
@@ -222,7 +222,7 @@
 
 <section id="pengumuman" class="page">
   <div class="card">
-    <h2>📢 Pengumuman</h2>
+    <h2>Pengumuman</h2>
     <div class="form">
       <input id="judulPengumuman" placeholder="Judul Pengumuman" autocomplete="off">
       <textarea id="deskripsiPengumuman" placeholder="Deskripsi / Isi Pengumuman" rows="4"></textarea>
@@ -247,7 +247,7 @@
 
 <section id="users" class="page">
   <div class="card" id="resetRequestsCard" style="display:none;">
-    <h2>🔔 Permintaan Reset Password</h2>
+    <h2>Permintaan Reset Password</h2>
     <div class="table-container">
       <table>
         <thead>
@@ -262,7 +262,7 @@
     </div>
   </div>
   <div class="card">
-    <h2>👤 Manajemen User</h2>
+    <h2>Manajemen User</h2>
     <div class="form" id="formUser">
       <input id="userUsername" placeholder="Username" autocomplete="off">
       <input id="userPassword" placeholder="Password" type="password" autocomplete="off">
@@ -276,7 +276,7 @@
       <button onclick="cancelEditUser()" id="btnCancelEditUser" class="btn-cancel" style="display:none;">❌ Batal</button>
     </div>
     <div class="search-box">
-      <input id="searchUser" placeholder="🔍 Cari user..." onkeyup="searchUser()" autocomplete="off">
+      <input id="searchUser" placeholder="Cari user..." onkeyup="searchUser()" autocomplete="off">
     </div>
     <div class="table-container">
       <table>
@@ -298,7 +298,7 @@
 
 <section id="laporan" class="page">
   <div class="card">
-    <h2>📄 Laporan</h2>
+    <h2>Laporan</h2>
     <div class="report-buttons">
       <button onclick="exportKunjungan()">📥 Export Kunjungan (CSV)</button>
       <button onclick="exportPeminjaman()">📥 Export Peminjaman (CSV)</button>
