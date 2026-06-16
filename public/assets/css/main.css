@@ -132,6 +132,12 @@ header p {
   font-weight: 400;
 }
 
+header .version {
+  font-size: 11px;
+  color: var(--navy-500);
+  opacity: 0.7;
+}
+
 /* ============ USER INFO & LOGOUT ============ */
 .user-info {
   display: flex;

@@ -19,7 +19,7 @@ module.exports = {
 
   app: {
     name: 'Lab Management System',
-    version: '2.2.0',
+    version: '2.7.0',
     environment: process.env.NODE_ENV || 'development'
   },
 

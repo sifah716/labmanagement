@@ -1,6 +1,6 @@
 {
   "name": "lab-management-system",
-  "version": "2.0.0",
+  "version": "2.7.0",
   "description": "Sistem Manajemen Laboratorium - Monitoring Kunjungan dan Peminjaman Barang",
   "main": "server.js",
   "scripts": {

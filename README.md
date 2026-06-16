@@ -67,9 +67,10 @@ Sistem manajemen laboratorium berbasis web untuk monitoring kunjungan guru, pemi
 - npm atau yarn
 
 ### Langkah
-1. Masuk ke folder proyek
+1. Clone repositori
 ```bash
-cd labmagement
+git clone https://github.com/sifah716/labmanagement.git
+cd labmanagement
 ```
 2. Install dependencies
 ```bash
@@ -83,6 +84,9 @@ npm start
 ```
 http://localhost:3000/
 ```
+
+> **Production (PostgreSQL):** Set environment `DATABASE_URL` dan jalankan `npm run migrate`.  
+> **Lokal (development):** Cukup jalankan `npm start` — otomatis pakai SQLite.
 
 ## Akun Default
 
@@ -148,11 +152,9 @@ http://localhost:3000/
 ## Struktur Proyek
 
 ```
-labmagement/
+labmanagement/
 ├── config/                    # Konfigurasi aplikasi
 │   └── config.js
-├── data/                      # Database dan data persisten
-│   └── lab.db
 ├── logs/                      # Folder log aplikasi
 │   └── .gitkeep
 ├── public/                    # Frontend (Static files)
@@ -176,7 +178,7 @@ labmagement/
 │   └── service-worker.js      # PWA service worker
 ├── server/                    # Backend (API & Logic)
 │   ├── database/
-│   │   └── db.js              # SQLite + init + seed
+│   │   └── db.js              # Database (SQLite/PostgreSQL)
 │   ├── middleware/
 │   │   └── auth.js            # Authenticate & requireAdmin
 │   └── routes/
@@ -231,10 +233,6 @@ labmagement/
 - Hapus folder `node_modules`
 - Jalankan `npm install` ulang
 
-### Database bermasalah atau ingin reset data
-- Hapus file `data/lab.db`
-- Restart server, database akan dibuat otomatis dengan data default
-
 ### Login tidak berhasil
 - Gunakan akun default: `admin`/`admin123` atau `user`/`user123`
 - Bersihkan browser cache: Buka DevTools (F12) → Application → Clear Storage → Clear site data
@@ -251,7 +249,7 @@ labmagement/
 Backend dibangun dengan arsitektur modular untuk mudah dikembangkan dan dipelihara:
 
 ### Database (`/server/database/db.js`)
-- SQLite database
+- Dual database: SQLite (lokal) / PostgreSQL (production)
 - Tabel otomatis: `users`, `kunjungan`, `barang`, `peminjaman`, `reset_tokens`, `reset_requests`, `notifications`
 - Migration kolom baru otomatis
 - Fungsi helper: `hashPassword`, `addNotification`
@@ -306,49 +304,3 @@ Backend dibangun dengan arsitektur modular untuk mudah dikembangkan dan dipeliha
 ### PWA
 - **manifest.json** — Installable app metadata
 - **service-worker.js** — Cache management (v2.7)
-
----
-
-## Database Migration: SQLite → PostgreSQL
-
-### Kenapa migrasi?
-- SQLite menyimpan data di file lokal (`data/lab.db`). Di Railway (dan banyak cloud platform), file ini bisa **hilang saat server restart/deploy**.
-- PostgreSQL menyimpan data di server database terpisah — data **aman walau restart**.
-
-### Cara migrasi ke PostgreSQL
-
-**1. Set DATABASE_URL environment**
-```bash
-# Windows PowerShell
-$env:DATABASE_URL="postgresql://user:pass@host:5432/nama_db"
-
-# Railway: tambah PostgreSQL plugin → DATABASE_URL otomatis disediakan
-```
-
-**2. Jalankan migrasi**
-```bash
-npm run migrate
-```
-Script akan membaca data dari `data/lab.db` dan menulis ke PostgreSQL.
-
-**3. Deploy ke Railway dengan PostgreSQL**
-
-Setelah setup PostgreSQL di Railway dan menjalankan migrasi, app akan otomatis pakai PostgreSQL karena mendeteksi env `DATABASE_URL`.
-
-### Cara kerja dual database
-- **Lokal (development)**: `DATABASE_URL` tidak diset → otomatis pakai SQLite
-- **Railway (production)**: `DATABASE_URL` diset oleh Railway → otomatis pakai PostgreSQL
-- Semua kode tetap sama — tidak perlu ubah route atau query
-
-### Railway Deployment Steps
-
-1. Push code ke GitHub
-2. Di Railway Dashboard: **New Project** → **Deploy from GitHub repo**
-3. **Add PostgreSQL plugin** → otomatis set `DATABASE_URL`
-4. Set env variable `RAILWAY_RUN_UID=0` (jika ada error permission)
-5. Deploy → app otomatis buat tabel dan seed data di PostgreSQL
-
-> Untuk migrasi data dari SQLite yang sudah ada:
-> 1. Download `data/lab.db` dari Railway (via volume atau backup)
-> 2. Jalankan `npm run migrate` secara lokal dengan `DATABASE_URL` mengarah ke PostgreSQL Railway
-> 3. Atau akses Railway PostgreSQL via tool seperti pgAdmin, lalu import manual
