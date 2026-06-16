@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 
-// Import database and routes
 const { initDatabase, closeDatabase } = require('./server/database/db');
 const authRoutes = require('./server/routes/auth');
 const barangRoutes = require('./server/routes/barang');
@@ -16,18 +15,15 @@ const usersRoutes = require('./server/routes/users');
 
 const app = express();
 
-// Middleware
-app.set('trust proxy', 1); // trust first proxy (Railway, Heroku, dll)
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// Initialize database
 initDatabase();
 
-// Routes
-app.use('/auth', authRoutes); // /login, /logout, /me, /health, /debug/users
+app.use('/auth', authRoutes);
 app.use('/barang', barangRoutes);
 app.use('/kunjungan', kunjunganRoutes);
 app.use('/peminjaman', peminjamanRoutes);
@@ -35,13 +31,10 @@ app.use('/stats', statsRoutes);
 app.use('/announcements', announcementsRoutes);
 app.use('/users', usersRoutes);
 
-// ============ ERROR HANDLING ============
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: "Endpoint not found" });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ 
@@ -50,7 +43,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\nShutting down gracefully...');
   closeDatabase().then(() => {
@@ -60,7 +52,6 @@ process.on('SIGINT', () => {
   });
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 

@@ -1,40 +1,272 @@
-// ============ DATABASE CONNECTION & SETUP ============
-const sqlite3 = require("sqlite3").verbose();
+
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 
-// Ensure data directory exists
-const dataDir = path.join(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+const isPostgres = !!process.env.DATABASE_URL;
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, '../../logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
-
-// Database connection
-const dbPath = process.env.DB_PATH || path.join(__dirname, '../../data/lab.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error opening database:', err.message);
-    process.exit(1);
-  }
-  console.log('✓ Connected to SQLite database');
-});
-
-// Helper function untuk hash password
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-// Initialize database tables and seed data
+function isUniqueError(err) {
+  if (!err) return false;
+  if (err.message && err.message.includes('UNIQUE')) return true;
+  if (err.code === '23505') return true;
+  return false;
+}
+
+let db;
+let pool;
+
+if (isPostgres) {
+
+  const { Pool } = require('pg');
+  pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+  db = {
+    pool,
+    run(sql, params = [], callback) {
+      if (typeof params === 'function') { callback = params; params = []; }
+      const isInsert = /^\s*INSERT/i.test(sql);
+
+      let idx = 0;
+      const pgSql = sql.replace(/\?/g, () => `$${++idx}`);
+      
+      const query = isInsert ? pgSql + ' RETURNING id' : pgSql;
+
+      pool.query(query, params)
+        .then(result => {
+          const ctx = {
+            lastID: isInsert && result.rows.length > 0 ? result.rows[0].id : undefined,
+            changes: result.rowCount
+          };
+          if (callback) callback.call(ctx, null);
+        })
+        .catch(err => {
+          if (callback) callback(err);
+          else console.error('DB run error:', err);
+        });
+    },
+
+    get(sql, params = [], callback) {
+      if (typeof params === 'function') { callback = params; params = []; }
+      let idx = 0;
+      const pgSql = sql.replace(/\?/g, () => `$${++idx}`);
+      pool.query(pgSql, params)
+        .then(result => callback(null, result.rows[0] || null))
+        .catch(err => callback(err));
+    },
+
+    all(sql, params = [], callback) {
+      if (typeof params === 'function') { callback = params; params = []; }
+      let idx = 0;
+      const pgSql = sql.replace(/\?/g, () => `$${++idx}`);
+      pool.query(pgSql, params)
+        .then(result => callback(null, result.rows))
+        .catch(err => callback(err));
+    },
+
+    serialize(fn) { fn(); },
+
+    close() { return pool.end(); }
+  };
+
+  console.log('✓ Connected to PostgreSQL database');
+
+} else {
+
+  const sqlite3 = require("sqlite3").verbose();
+
+  const dataDir = path.join(__dirname, '../../data');
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+  const logsDir = path.join(__dirname, '../../logs');
+  if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+
+  const dbPath = process.env.DB_PATH || path.join(__dirname, '../../data/lab.db');
+  db = new sqlite3.Database(dbPath, (err) => {
+    if (err) { console.error('Error opening database:', err.message); process.exit(1); }
+    console.log('✓ Connected to SQLite database');
+  });
+
+  pool = null;
+}
+
 function initDatabase() {
+  if (isPostgres) {
+    initPostgres().catch(err => { console.error('PostgreSQL init error:', err); });
+  } else {
+    initSQLite();
+  }
+}
+
+async function initPostgres() {
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(255) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      role VARCHAR(50) NOT NULL DEFAULT 'user',
+      token TEXT,
+      display_name TEXT DEFAULT '',
+      lab TEXT DEFAULT '',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS barang (
+      id SERIAL PRIMARY KEY,
+      nama VARCHAR(255) NOT NULL,
+      kode VARCHAR(255) UNIQUE NOT NULL,
+      stok INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS kunjungan (
+      id SERIAL PRIMARY KEY,
+      nama_guru VARCHAR(255) NOT NULL,
+      kelas_diajar VARCHAR(255) NOT NULL,
+      jam_mulai VARCHAR(50) NOT NULL,
+      jam_selesai VARCHAR(50) NOT NULL,
+      tanggal VARCHAR(50) NOT NULL,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      user_lab TEXT DEFAULT '',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS peminjaman (
+      id SERIAL PRIMARY KEY,
+      nama VARCHAR(255) NOT NULL,
+      barang_id INTEGER NOT NULL REFERENCES barang(id) ON DELETE CASCADE,
+      jumlah INTEGER NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'dipinjam' CHECK(status IN ('dipinjam', 'kembali')),
+      waktu_pinjam TIMESTAMP NOT NULL DEFAULT NOW(),
+      waktu_kembali TIMESTAMP,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      user_lab TEXT DEFAULT '',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_peminjaman_status ON peminjaman(status)");
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_peminjaman_barang ON peminjaman(barang_id)");
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_kunjungan_tanggal ON kunjungan(tanggal)");
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_users_token ON users(token)");
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_peminjaman_created_by ON peminjaman(created_by)");
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_kunjungan_created_by ON kunjungan(created_by)");
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reset_tokens (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token VARCHAR(255) UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON reset_tokens(token)");
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reset_requests (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      username VARCHAR(255) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      token TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMP
+    )
+  `);
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_reset_requests_status ON reset_requests(status)");
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      type VARCHAR(50) NOT NULL,
+      message TEXT NOT NULL,
+      detail TEXT DEFAULT '',
+      is_read INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(is_read)");
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  const adminPassword = hashPassword('admin123');
+  const userPassword = hashPassword('user123');
+  const now = new Date().toISOString();
+
+  try {
+    await pool.query(
+      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO NOTHING",
+      ['admin', adminPassword, 'admin', 'Administrator', 'IT', now]
+    );
+    console.log('✓ Admin user ready (admin/admin123)');
+  } catch (e) { console.error('Error creating admin:', e.message); }
+
+  try {
+    await pool.query(
+      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO NOTHING",
+      ['user', userPassword, 'user', 'User Lab', 'Lab Komputer', now]
+    );
+    console.log('✓ Regular user ready (user/user123)');
+  } catch (e) { console.error('Error creating user:', e.message); }
+
+  try {
+    await pool.query(
+      "INSERT INTO announcements (title, description, created_at, updated_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+      ["Selamat Datang di Sistem Manajemen Lab", "...", now, now]
+    );
+  } catch (e) {  }
+
+  const barangItems = [
+    { nama: "Camera", kode: "CAM001", stok: 5 },
+    { nama: "Laptop", kode: "LAP001", stok: 8 },
+    { nama: "Buku", kode: "BUK001", stok: 20 },
+    { nama: "Penggaris", kode: "PEN001", stok: 15 },
+    { nama: "Microscope", kode: "MIC001", stok: 3 },
+    { nama: "Projector", kode: "PROJ001", stok: 2 },
+    { nama: "Whiteboard", kode: "WB001", stok: 4 },
+    { nama: "Pendrive", kode: "USB001", stok: 10 },
+    { nama: "Mouse", kode: "MOU001", stok: 12 },
+    { nama: "Keyboard", kode: "KEY001", stok: 10 }
+  ];
+
+  for (const item of barangItems) {
+    try {
+      await pool.query(
+        "INSERT INTO barang (nama, kode, stok, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (kode) DO NOTHING",
+        [item.nama, item.kode, item.stok, now, now]
+      );
+    } catch (e) {  }
+  }
+
+  console.log('✓ PostgreSQL tables & seed data ready');
+}
+
+function initSQLite() {
+
+  const sqlite3 = require("sqlite3").verbose();
+
   db.serialize(() => {
-    // Tabel users
     db.run(`CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
@@ -82,7 +314,6 @@ function initDatabase() {
     db.run("CREATE INDEX IF NOT EXISTS idx_kunjungan_tanggal ON kunjungan(tanggal)");
     db.run("CREATE INDEX IF NOT EXISTS idx_users_token ON users(token)");
 
-    // Tabel reset tokens untuk fitur lupa password
     db.run(`CREATE TABLE IF NOT EXISTS reset_tokens (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -94,7 +325,6 @@ function initDatabase() {
     )`);
     db.run("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON reset_tokens(token)");
 
-    // Tabel reset requests (user minta reset → admin approve)
     db.run(`CREATE TABLE IF NOT EXISTS reset_requests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -107,7 +337,6 @@ function initDatabase() {
     )`);
     db.run("CREATE INDEX IF NOT EXISTS idx_reset_requests_status ON reset_requests(status)");
 
-    // Tabel notifikasi aktivitas
     db.run(`CREATE TABLE IF NOT EXISTS notifications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type TEXT NOT NULL,
@@ -126,7 +355,6 @@ function initDatabase() {
       updated_at TEXT NOT NULL
     )`);
 
-    // Migration: tambah kolom baru ke tabel yang sudah ada (jika belum ada)
     const migrations = [
       "ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''",
       "ALTER TABLE users ADD COLUMN lab TEXT DEFAULT ''",
@@ -135,50 +363,31 @@ function initDatabase() {
       "ALTER TABLE peminjaman ADD COLUMN created_by INTEGER REFERENCES users(id)",
       "ALTER TABLE peminjaman ADD COLUMN user_lab TEXT DEFAULT ''"
     ];
-    migrations.forEach(function(sql) {
-      db.run(sql, function(err) { if (err) { /* kolom sudah ada, abaikan */ } });
+    migrations.forEach(sql => {
+      db.run(sql, function(err) { if (err) {  } });
     });
 
-    // Update default admin & user dengan display_name dan lab
     db.run("UPDATE users SET display_name='Administrator', lab='IT' WHERE username='admin' AND display_name=''");
     db.run("UPDATE users SET display_name='User Lab', lab='Lab Komputer' WHERE username='user' AND display_name=''");
 
-    // Seed default users
     const adminPassword = hashPassword('admin123');
     const userPassword = hashPassword('user123');
 
-    db.run(
-      "INSERT OR IGNORE INTO users (username, password, role, created_at) VALUES (?, ?, ?, ?)",
+    db.run("INSERT OR IGNORE INTO users (username, password, role, created_at) VALUES (?, ?, ?, ?)",
       ['admin', adminPassword, 'admin', new Date().toISOString()],
-      function(err) {
-        if (err) {
-          console.error('Error creating admin user:', err.message);
-        } else {
-          console.log('✓ Admin user ready (admin/admin123)');
-        }
-      }
+      function(err) { if (!err) console.log('✓ Admin user ready (admin/admin123)'); }
     );
 
-    db.run(
-      "INSERT OR IGNORE INTO users (username, password, role, created_at) VALUES (?, ?, ?, ?)",
+    db.run("INSERT OR IGNORE INTO users (username, password, role, created_at) VALUES (?, ?, ?, ?)",
       ['user', userPassword, 'user', new Date().toISOString()],
-      function(err) {
-        if (err) {
-          console.error('Error creating user:', err.message);
-        } else {
-          console.log('✓ Regular user ready (user/user123)');
-        }
-      }
+      function(err) { if (!err) console.log('✓ Regular user ready (user/user123)'); }
     );
 
-    // Seed default announcement
     const now = new Date().toISOString();
-db.run(
-  "INSERT OR IGNORE INTO announcements (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
-  [ "Selamat Datang di Sistem Manajemen Lab", "...", now, now ]
-);
+    db.run("INSERT OR IGNORE INTO announcements (title, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
+      ["Selamat Datang di Sistem Manajemen Lab", "...", now, now]
+    );
 
-    // Seed data untuk barang
     const barangItems = [
       { nama: "Camera", kode: "CAM001", stok: 5 },
       { nama: "Laptop", kode: "LAP001", stok: 8 },
@@ -191,42 +400,54 @@ db.run(
       { nama: "Mouse", kode: "MOU001", stok: 12 },
       { nama: "Keyboard", kode: "KEY001", stok: 10 }
     ];
-
     barangItems.forEach(item => {
-      db.run(
-        "INSERT OR IGNORE INTO barang (nama, kode, stok, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-        [item.nama, item.kode, item.stok, now, now]
-      );
+      db.run("INSERT OR IGNORE INTO barang (nama, kode, stok, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        [item.nama, item.kode, item.stok, now, now]);
     });
   });
 }
 
-// Graceful shutdown
 function closeDatabase() {
   return new Promise((resolve, reject) => {
-    db.close((err) => {
-      if (err) {
-        console.error('Error closing database:', err.message);
-        reject(err);
-      } else {
-        console.log('✓ Database connection closed');
+    if (isPostgres && pool) {
+      pool.end().then(() => {
+        console.log('✓ PostgreSQL connection closed');
         resolve();
-      }
-    });
+      }).catch(err => {
+        console.error('Error closing PostgreSQL:', err.message);
+        reject(err);
+      });
+    } else if (db && !isPostgres) {
+      db.close((err) => {
+        if (err) { console.error('Error closing database:', err.message); reject(err); }
+        else { console.log('✓ Database connection closed'); resolve(); }
+      });
+    } else {
+      resolve();
+    }
   });
+}
+
+function addNotification(type, message, detail = '') {
+  const now = new Date().toISOString();
+  if (isPostgres) {
+    pool.query(
+      "INSERT INTO notifications (type, message, detail, created_at) VALUES ($1, $2, $3, $4)",
+      [type, message, detail, now]
+    ).catch(err => console.error('Notification error:', err));
+  } else {
+    db.run("INSERT INTO notifications (type, message, detail, created_at) VALUES (?, ?, ?, ?)",
+      [type, message, detail, now]);
+  }
 }
 
 module.exports = {
   db,
   hashPassword,
+  isUniqueError,
   initDatabase,
   closeDatabase,
-  addNotification
+  addNotification,
+  isPostgres,
+  pool
 };
-
-// Tambah notifikasi aktivitas
-function addNotification(type, message, detail = '') {
-  const now = new Date().toISOString();
-  db.run("INSERT INTO notifications (type, message, detail, created_at) VALUES (?, ?, ?, ?)",
-    [type, message, detail, now]);
-}

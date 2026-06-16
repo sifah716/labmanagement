@@ -306,3 +306,49 @@ Backend dibangun dengan arsitektur modular untuk mudah dikembangkan dan dipeliha
 ### PWA
 - **manifest.json** — Installable app metadata
 - **service-worker.js** — Cache management (v2.7)
+
+---
+
+## Database Migration: SQLite → PostgreSQL
+
+### Kenapa migrasi?
+- SQLite menyimpan data di file lokal (`data/lab.db`). Di Railway (dan banyak cloud platform), file ini bisa **hilang saat server restart/deploy**.
+- PostgreSQL menyimpan data di server database terpisah — data **aman walau restart**.
+
+### Cara migrasi ke PostgreSQL
+
+**1. Set DATABASE_URL environment**
+```bash
+# Windows PowerShell
+$env:DATABASE_URL="postgresql://user:pass@host:5432/nama_db"
+
+# Railway: tambah PostgreSQL plugin → DATABASE_URL otomatis disediakan
+```
+
+**2. Jalankan migrasi**
+```bash
+npm run migrate
+```
+Script akan membaca data dari `data/lab.db` dan menulis ke PostgreSQL.
+
+**3. Deploy ke Railway dengan PostgreSQL**
+
+Setelah setup PostgreSQL di Railway dan menjalankan migrasi, app akan otomatis pakai PostgreSQL karena mendeteksi env `DATABASE_URL`.
+
+### Cara kerja dual database
+- **Lokal (development)**: `DATABASE_URL` tidak diset → otomatis pakai SQLite
+- **Railway (production)**: `DATABASE_URL` diset oleh Railway → otomatis pakai PostgreSQL
+- Semua kode tetap sama — tidak perlu ubah route atau query
+
+### Railway Deployment Steps
+
+1. Push code ke GitHub
+2. Di Railway Dashboard: **New Project** → **Deploy from GitHub repo**
+3. **Add PostgreSQL plugin** → otomatis set `DATABASE_URL`
+4. Set env variable `RAILWAY_RUN_UID=0` (jika ada error permission)
+5. Deploy → app otomatis buat tabel dan seed data di PostgreSQL
+
+> Untuk migrasi data dari SQLite yang sudah ada:
+> 1. Download `data/lab.db` dari Railway (via volume atau backup)
+> 2. Jalankan `npm run migrate` secara lokal dengan `DATABASE_URL` mengarah ke PostgreSQL Railway
+> 3. Atau akses Railway PostgreSQL via tool seperti pgAdmin, lalu import manual

@@ -1,11 +1,10 @@
-// ============ ANNOUNCEMENTS ROUTES ============
+
 const express = require('express');
 const { db } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /announcements - Get all announcements (public, no auth required)
 router.get("/", (req, res) => {
   db.all(
     "SELECT id, title, description, updated_at FROM announcements ORDER BY id DESC",
@@ -19,7 +18,6 @@ router.get("/", (req, res) => {
   );
 });
 
-// POST /announcements - Create new announcement (Admin only)
 router.post("/", authenticate, requireAdmin, (req, res) => {
   const { title, description } = req.body;
 
@@ -41,7 +39,6 @@ router.post("/", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-// PUT /announcements/:id - Update announcement (Admin only)
 router.put("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   const { title, description } = req.body;
@@ -67,7 +64,6 @@ router.put("/:id", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-// DELETE /announcements/:id - Delete announcement (Admin only)
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
 

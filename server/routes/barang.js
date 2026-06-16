@@ -1,11 +1,10 @@
-// ============ BARANG ROUTES ============
+
 const express = require('express');
-const { db } = require('../database/db');
+const { db, isUniqueError } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /barang - Get all barang with optional search
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
   let query = "SELECT * FROM barang";
@@ -26,7 +25,6 @@ router.get("/", authenticate, (req, res) => {
   });
 });
 
-// POST /barang - Create new barang
 router.post("/", authenticate, requireAdmin, (req, res) => {
   const { nama, kode, stok } = req.body;
   if (!nama || !kode || stok === undefined || stok === null) {
@@ -42,7 +40,7 @@ router.post("/", authenticate, requireAdmin, (req, res) => {
     [nama, kode, parseInt(stok), now, now],
     function(err) {
       if (err) {
-        if (err.message.includes("UNIQUE")) {
+        if (isUniqueError(err)) {
           return res.status(400).json({ error: "Kode barang sudah ada" });
         }
         return res.status(500).json({ error: "Database error", details: err.message });
@@ -52,7 +50,6 @@ router.post("/", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-// PUT /barang/:id - Update barang
 router.put("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   const { nama, kode, stok } = req.body;
@@ -71,7 +68,7 @@ router.put("/:id", authenticate, requireAdmin, (req, res) => {
     [nama, kode, parseInt(stok), now, id],
     function(err) {
       if (err) {
-        if (err.message.includes("UNIQUE")) {
+        if (isUniqueError(err)) {
           return res.status(400).json({ error: "Kode barang sudah ada" });
         }
         return res.status(500).json({ error: "Database error", details: err.message });
@@ -84,14 +81,12 @@ router.put("/:id", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-// DELETE /barang/:id - Delete barang
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {
     return res.status(400).json({ error: "ID tidak valid" });
   }
 
-  // Check if barang is being borrowed
   db.get(
     "SELECT COUNT(*) as count FROM peminjaman WHERE barang_id=? AND status='dipinjam'",
     [id],

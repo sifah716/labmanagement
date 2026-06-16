@@ -1,5 +1,5 @@
-// ============ GLOBAL VARIABLES ============
-// API_URL is defined in config.js
+
+
 let currentUser = null;
 let editingBarangId = null;
 let editingKunjunganId = null;
@@ -8,7 +8,6 @@ let allKunjungan = [];
 let allPeminjaman = [];
 let allBarang = [];
 
-// ============ AUTHENTICATION ============
 function checkAuth() {
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
@@ -21,8 +20,7 @@ function checkAuth() {
   currentUser = JSON.parse(userStr);
   document.getElementById('userDisplay').textContent = 
     `${currentUser.role === 'admin' ? '👑' : '👤'} ${currentUser.display_name || currentUser.username}`;
-  
-  // Show/hide menu based on role (check if elements exist first)
+
   if (currentUser.role === 'admin') {
     const btnBarang = document.getElementById('btnBarang');
     const btnLaporan = document.getElementById('btnLaporan');
@@ -52,7 +50,6 @@ async function handleLogout() {
   window.location.href = '/';
 }
 
-// ============ FETCH HELPER ============
 async function fetchAPI(endpoint, options = {}) {
   const token = localStorage.getItem('token');
   
@@ -87,7 +84,6 @@ async function fetchAPI(endpoint, options = {}) {
   return response.json();
 }
 
-// ============ UTILITY FUNCTIONS ============
 const formatDate = (iso) => {
   const date = new Date(iso);
   return date.toLocaleDateString('id-ID', {
@@ -140,8 +136,7 @@ function showLoading(show = true) {
 function showPage(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  
-  // Load data when switching pages
+
   if (id === 'dashboard') loadDashboard();
   if (id === 'kunjungan') loadKunjungan();
   if (id === 'peminjaman') loadPeminjaman();
@@ -150,13 +145,12 @@ function showPage(id) {
   if (id === 'pengumuman') loadPengumuman();
 }
 
-// ============ DASHBOARD ============
 async function loadDashboard() {
   try {
     showLoading(true);
     
     if (currentUser.role === 'admin') {
-      // Admin: Tampilkan statistik
+
       const stats = await fetchAPI('/stats');
       
       document.getElementById('statTotalKunjungan').textContent = stats.totalKunjungan || 0;
@@ -165,8 +159,7 @@ async function loadDashboard() {
       document.getElementById('statTotalBarang').textContent = stats.totalBarang || 0;
       document.getElementById('statStokRendah').textContent = stats.barangStokRendah || 0;
       document.getElementById('statKunjunganHariIni').textContent = stats.kunjunganHariIni || 0;
-      
-      // Display top barang
+
       const chartDiv = document.getElementById('topBarangChart');
       if (stats.topBarang && stats.topBarang.length > 0) {
         let html = '<div class="chart-bars">';
@@ -190,7 +183,7 @@ async function loadDashboard() {
         chartDiv.innerHTML = '<p style="text-align:center; color:#7f8c8d;">Belum ada data peminjaman</p>';
       }
     } else {
-      // User: Tampilkan pengumuman (slider) dan informasi
+
       try {
         const announcements = await fetchAPI('/announcements');
         let slidesHTML = '';
@@ -257,7 +250,7 @@ async function loadDashboard() {
           startAnnouncementSlider();
         }
       } catch (error) {
-        // Fallback jika gagal fetch announcements
+
         document.getElementById('dashboard').innerHTML = `
           <h2>📋 Dashboard</h2>
           <div class="info-section">
@@ -307,14 +300,12 @@ async function loadDashboard() {
   }
 }
 
-// ============ ANNOUNCEMENT SLIDER ============
 let announcementSliderInterval = null;
 
 function startAnnouncementSlider() {
   const slider = document.getElementById('announcementSlider');
   if (!slider) return;
 
-  // Stop existing interval
   if (announcementSliderInterval) {
     clearInterval(announcementSliderInterval);
   }
@@ -338,24 +329,20 @@ function startAnnouncementSlider() {
     goTo((current + 1) % slides.length);
   }
 
-  // Click dots
   dots.forEach(dot => {
     dot.addEventListener('click', () => {
       goTo(parseInt(dot.dataset.index));
     });
   });
 
-  // Pause on hover
   slider.addEventListener('mouseenter', () => { isHovering = true; });
   slider.addEventListener('mouseleave', () => { isHovering = false; });
 
-  // Auto play
   announcementSliderInterval = setInterval(() => {
     if (!isHovering) next();
   }, 4000);
 }
 
-// ============ KUNJUNGAN ============
 async function loadKunjungan(search = '', userFilter = '', labFilter = '') {
   try {
     showLoading(true);
@@ -420,7 +407,7 @@ async function tambahKunjungan() {
     showLoading(true);
     
     if (editingKunjunganId) {
-      // Update
+
       await fetchAPI("/kunjungan/" + editingKunjunganId, {
         method: "PUT",
         body: JSON.stringify({ nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal })
@@ -428,7 +415,7 @@ async function tambahKunjungan() {
       showNotification("Kunjungan berhasil diupdate", 'success');
       cancelEditKunjungan();
     } else {
-      // Create
+
       await fetchAPI("/kunjungan", {
         method: "POST",
         body: JSON.stringify({ nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal })
@@ -462,8 +449,7 @@ function editKunjungan(id) {
   editingKunjunganId = id;
   document.getElementById("btnSubmitKunjungan").textContent = "💾 Update";
   document.getElementById("btnCancelEditK").style.display = "inline-block";
-  
-  // Scroll to form
+
   document.querySelector("#kunjungan .form").scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -493,7 +479,6 @@ async function hapusKunjungan(id) {
   }
 }
 
-// ============ PEMINJAMAN ============
 async function loadPeminjaman(search = '', status = '', userFilter = '', labFilter = '') {
   try {
     showLoading(true);
@@ -633,7 +618,7 @@ function editPeminjaman(id) {
   if (!peminjaman) return;
   
   const newNama = prompt("Edit Nama Peminjam:", peminjaman.nama);
-  if (newNama === null) return; // User cancelled
+  if (newNama === null) return;
   
   if (!newNama.trim()) {
     showNotification("Nama tidak boleh kosong", 'error');
@@ -675,7 +660,6 @@ async function hapusPeminjaman(id) {
   }
 }
 
-// ============ BARANG (ADMIN ONLY) ============
 async function loadBarang(search = '') {
   try {
     showLoading(true);
@@ -733,7 +717,7 @@ async function tambahBarang() {
     showLoading(true);
     
     if (editingBarangId) {
-      // Update
+
       await fetchAPI("/barang/" + editingBarangId, {
         method: "PUT",
         body: JSON.stringify({ nama, kode, stok: stokInt })
@@ -741,7 +725,7 @@ async function tambahBarang() {
       showNotification("Barang berhasil diupdate", 'success');
       cancelEditBarang();
     } else {
-      // Create
+
       await fetchAPI("/barang", {
         method: "POST",
         body: JSON.stringify({ nama, kode, stok: stokInt })
@@ -772,8 +756,7 @@ function editBarang(id) {
   editingBarangId = id;
   document.getElementById("btnSubmitBarang").textContent = "💾 Update";
   document.getElementById("btnCancelEdit").style.display = "inline-block";
-  
-  // Scroll to form
+
   document.getElementById("formBarang").scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -802,7 +785,6 @@ async function hapusBarang(id) {
   }
 }
 
-// ============ EXPORT & PRINT ============
 function downloadCSV(filename, data) {
   const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
@@ -934,7 +916,6 @@ async function printReport() {
   }
 }
 
-// ============ PENGUMUMAN (ANNOUNCEMENTS) ============
 let allPengumuman = [];
 let editingPengumumanId = null;
 
@@ -982,7 +963,7 @@ async function tambahPengumuman() {
     showLoading(true);
     
     if (editingPengumumanId) {
-      // Update
+
       await fetchAPI("/announcements/" + editingPengumumanId, {
         method: "PUT",
         body: JSON.stringify({ title: judul, description: deskripsi })
@@ -990,7 +971,7 @@ async function tambahPengumuman() {
       showNotification("Pengumuman berhasil diupdate", 'success');
       cancelEditPengumuman();
     } else {
-      // Create
+
       await fetchAPI("/announcements", {
         method: "POST",
         body: JSON.stringify({ title: judul, description: deskripsi })
@@ -1018,8 +999,7 @@ function editPengumuman(id) {
   editingPengumumanId = id;
   document.getElementById("btnSubmitPengumuman").textContent = "💾 Update";
   document.getElementById("btnCancelEditP").style.display = "inline-block";
-  
-  // Scroll to form
+
   document.querySelector("#pengumuman .form").scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -1046,7 +1026,6 @@ async function hapusPengumuman(id) {
   }
 }
 
-// ============ PROFILE MODAL ============
 function showProfileModal() {
   const user = JSON.parse(localStorage.getItem('user'));
   document.getElementById('profileDisplayName').value = user.display_name || '';
@@ -1092,14 +1071,12 @@ async function saveProfile() {
       method: 'PUT',
       body: JSON.stringify(body)
     });
-    
-    // Update localStorage
+
     const user = JSON.parse(localStorage.getItem('user'));
     user.display_name = result.user.display_name || display_name;
     user.lab = result.user.lab || lab;
     localStorage.setItem('user', JSON.stringify(user));
-    
-    // Update header display
+
     document.getElementById('userDisplay').textContent = 
       `${user.role === 'admin' ? '👑' : '👤'} ${result.user.display_name || display_name}`;
     
@@ -1118,7 +1095,6 @@ async function saveProfile() {
   }
 }
 
-// ============ USERS MANAGEMENT (Admin Only) ============
 async function loadUsers(search = '') {
   try {
     showLoading(true);
@@ -1259,20 +1235,17 @@ async function hapusUser(id) {
   }
 }
 
-// ============ RESET REQUESTS (Admin) ============
 async function loadResetRequests() {
   try {
     const requests = await fetchAPI('/auth/reset-requests');
     const pending = requests.filter(r => r.status === 'pending');
 
-    // Update badge on nav
     const badge = document.getElementById('resetBadge');
     if (badge) {
       badge.textContent = pending.length;
       badge.style.display = pending.length > 0 ? 'inline-flex' : 'none';
     }
 
-    // Update card
     const card = document.getElementById('resetRequestsCard');
     const tbody = document.getElementById('tableResetRequests');
     if (!card || !tbody) return;
@@ -1336,7 +1309,6 @@ async function denyResetRequest(id) {
   }
 }
 
-// ============ NOTIFICATIONS (Admin) ============
 let notifOpen = false;
 
 function toggleNotifications() {
@@ -1360,7 +1332,6 @@ function toggleNotifications() {
   }
 }
 
-// Click outside to close
 document.addEventListener('click', function(e) {
   if (notifOpen && !e.target.closest('#notifBtn')) {
     const dd = document.getElementById('notifDropdown');
@@ -1373,7 +1344,6 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Close on scroll
 document.addEventListener('scroll', function() {
   if (notifOpen) {
     const dd = document.getElementById('notifDropdown');
@@ -1393,7 +1363,6 @@ async function loadNotifications() {
     badge.textContent = data.unread_count;
     badge.style.display = data.unread_count > 0 ? 'flex' : 'none';
 
-    // Only update the list if the dropdown is open
     if (!notifOpen) return;
 
     const list = document.getElementById('notifList');
@@ -1454,7 +1423,6 @@ async function markNotifRead() {
   } catch(e) {}
 }
 
-// ============ FILTER LOADERS ============
 async function loadUserFilters() {
   try {
     const users = await fetchAPI('/users');
@@ -1496,16 +1464,13 @@ async function loadUserFilters() {
   }
 }
 
-// ============ INITIALIZATION ============
 document.addEventListener('DOMContentLoaded', () => {
   if (!checkAuth()) return;
-  
-  // Set today's date as default
+
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('tanggalK').value = today;
   document.getElementById('tanggalP').value = today;
-  
-  // Load initial data
+
   loadDashboard();
   loadBarangForSelect();
   if (currentUser.role === 'admin') { loadUserFilters(); loadResetRequests(); loadNotifications(); setInterval(loadNotifications, 30000); }

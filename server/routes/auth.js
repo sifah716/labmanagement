@@ -1,4 +1,4 @@
-// ============ AUTHENTICATION ROUTES ============
+
 const express = require('express');
 const crypto = require('crypto');
 const { db, hashPassword, addNotification } = require('../database/db');
@@ -6,7 +6,6 @@ const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// POST /login
 router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -27,7 +26,6 @@ router.post("/login", (req, res) => {
         return res.status(401).json({ error: "Username atau password salah" });
       }
 
-      // Generate token
       const token = crypto.randomBytes(32).toString('hex');
 
       db.run("UPDATE users SET token=? WHERE id=?", [token, user.id], (updateErr) => {
@@ -51,7 +49,6 @@ router.post("/login", (req, res) => {
   );
 });
 
-// POST /logout
 router.post("/logout", authenticate, (req, res) => {
   db.run("UPDATE users SET token=NULL WHERE id=?", [req.user.id], (err) => {
     if (err) {
@@ -61,7 +58,6 @@ router.post("/logout", authenticate, (req, res) => {
   });
 });
 
-// GET /me
 router.get("/me", authenticate, (req, res) => {
   res.json({
     id: req.user.id,
@@ -72,7 +68,6 @@ router.get("/me", authenticate, (req, res) => {
   });
 });
 
-// PUT /profile — Edit profil sendiri
 router.put("/profile", authenticate, (req, res) => {
   const { display_name, lab, current_password, new_password } = req.body;
 
@@ -80,7 +75,6 @@ router.put("/profile", authenticate, (req, res) => {
     return res.status(400).json({ error: "Tidak ada data yang diubah" });
   }
 
-  // Jika mau ganti password, harus isi current_password
   if (new_password) {
     if (!current_password) {
       return res.status(400).json({ error: "Password saat ini harus diisi untuk mengganti password" });
@@ -108,7 +102,7 @@ router.put("/profile", authenticate, (req, res) => {
   if (new_password) {
     updates.push("password=?");
     params.push(hashPassword(new_password));
-    // Force re-login: hapus token
+
     updates.push("token=NULL");
   }
 
@@ -117,7 +111,7 @@ router.put("/profile", authenticate, (req, res) => {
     if (err) {
       return res.status(500).json({ error: "Database error" });
     }
-    // Fetch updated user
+
     db.get("SELECT id, username, role, display_name, lab FROM users WHERE id=?", [req.user.id], (err2, user) => {
       if (err2) {
         return res.status(500).json({ error: "Database error" });
@@ -138,7 +132,6 @@ router.put("/profile", authenticate, (req, res) => {
   });
 });
 
-// Health check endpoint (no auth required)
 router.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
@@ -147,7 +140,6 @@ router.get("/health", (req, res) => {
   });
 });
 
-// POST /forgot-password — Kirim request reset ke admin
 router.post("/forgot-password", (req, res) => {
   const { username } = req.body;
 
@@ -160,12 +152,10 @@ router.post("/forgot-password", (req, res) => {
       return res.status(500).json({ error: "Database error" });
     }
 
-    // Jangan ungkap apakah user ditemukan atau tidak (security)
     if (!user) {
       return res.json({ success: true, message: "Jika username terdaftar, permintaan akan dikirim ke admin." });
     }
 
-    // Cek sudah ada request pending untuk user ini
     db.get("SELECT id FROM reset_requests WHERE user_id=? AND status='pending'", [user.id], (err2, existing) => {
       if (err2) return res.status(500).json({ error: "Database error" });
       if (existing) {
@@ -192,7 +182,6 @@ router.post("/forgot-password", (req, res) => {
   });
 });
 
-// GET /reset-requests — Admin lihat semua request
 router.get("/reset-requests", authenticate, requireAdmin, (req, res) => {
   db.all(
     "SELECT id, user_id, username, status, created_at FROM reset_requests ORDER BY created_at DESC",
@@ -204,7 +193,6 @@ router.get("/reset-requests", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-// POST /reset-requests/:id/approve — Admin setujui & set password baru langsung
 router.post("/reset-requests/:id/approve", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   const { newPassword } = req.body;
@@ -229,7 +217,6 @@ router.post("/reset-requests/:id/approve", authenticate, requireAdmin, (req, res
   });
 });
 
-// POST /reset-requests/:id/deny — Admin tolak
 router.post("/reset-requests/:id/deny", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) return res.status(400).json({ error: "ID tidak valid" });
@@ -244,7 +231,6 @@ router.post("/reset-requests/:id/deny", authenticate, requireAdmin, (req, res) =
   );
 });
 
-// POST /reset-password
 router.post("/reset-password", (req, res) => {
   const { token, password } = req.body;
 
@@ -276,10 +262,8 @@ router.post("/reset-password", (req, res) => {
           return res.status(500).json({ error: "Database error" });
         }
 
-        // Hapus token yang sudah dipakai
         db.run("UPDATE reset_tokens SET used=1 WHERE id=?", [resetToken.id]);
 
-        // Hapus token sesi user (paksa logout dari semua perangkat)
         db.run("UPDATE users SET token=NULL WHERE id=?", [resetToken.user_id]);
 
         res.json({
@@ -291,7 +275,6 @@ router.post("/reset-password", (req, res) => {
   );
 });
 
-// GET /notifications — Ambil notifikasi (admin only)
 router.get("/notifications", authenticate, requireAdmin, (req, res) => {
   db.all("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20", [], (err, rows) => {
     if (err) return res.status(500).json({ error: "Database error" });
@@ -300,7 +283,6 @@ router.get("/notifications", authenticate, requireAdmin, (req, res) => {
   });
 });
 
-// POST /notifications/read — Tandai semua sebagai sudah dibaca
 router.post("/notifications/read", authenticate, requireAdmin, (req, res) => {
   db.run("UPDATE notifications SET is_read=1 WHERE is_read=0", [], function(err) {
     if (err) return res.status(500).json({ error: "Database error" });
@@ -308,14 +290,12 @@ router.post("/notifications/read", authenticate, requireAdmin, (req, res) => {
   });
 });
 
-// DELETE /notifications/old — Hapus notifikasi > 7 hari
 router.delete("/notifications/old", authenticate, requireAdmin, (req, res) => {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   db.run("DELETE FROM notifications WHERE created_at < ?", [weekAgo]);
   res.json({ success: true });
 });
 
-// Debug endpoint to check if users exist (remove in production)
 router.get("/debug/users", (req, res) => {
   db.all("SELECT id, username, role, created_at FROM users", [], (err, rows) => {
     if (err) {

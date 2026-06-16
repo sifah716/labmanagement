@@ -1,7 +1,6 @@
-// ============ AUTHENTICATION MIDDLEWARE ============
+
 const { db } = require('../database/db');
 
-// Middleware untuk autentikasi
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -19,7 +18,6 @@ function authenticate(req, res, next) {
   });
 }
 
-// Middleware untuk super admin
 function requireAdmin(req, res, next) {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: "Forbidden: Admin only" });

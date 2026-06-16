@@ -1,12 +1,11 @@
-// ============ USERS MANAGEMENT ROUTES (ADMIN ONLY) ============
+
 const express = require('express');
 const crypto = require('crypto');
-const { db, hashPassword } = require('../database/db');
+const { db, hashPassword, isUniqueError } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /users — List semua user
 router.get("/", authenticate, requireAdmin, (req, res) => {
   db.all("SELECT id, username, role, display_name, lab, created_at FROM users ORDER BY id ASC", [], (err, rows) => {
     if (err) {
@@ -16,7 +15,6 @@ router.get("/", authenticate, requireAdmin, (req, res) => {
   });
 });
 
-// POST /users — Tambah user baru
 router.post("/", authenticate, requireAdmin, (req, res) => {
   const { username, password, role, display_name, lab } = req.body;
 
@@ -39,7 +37,7 @@ router.post("/", authenticate, requireAdmin, (req, res) => {
     [username, hashedPassword, userRole, display_name || username, lab || '', now],
     function(err) {
       if (err) {
-        if (err.message.includes('UNIQUE')) {
+        if (isUniqueError(err)) {
           return res.status(400).json({ error: "Username sudah digunakan" });
         }
         return res.status(500).json({ error: "Database error" });
@@ -49,7 +47,6 @@ router.post("/", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-// PUT /users/:id — Edit user
 router.put("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) return res.status(400).json({ error: "ID tidak valid" });
@@ -93,7 +90,7 @@ router.put("/:id", authenticate, requireAdmin, (req, res) => {
     params.push(id);
     db.run(`UPDATE users SET ${updates.join(", ")} WHERE id=?`, params, function(updateErr) {
       if (updateErr) {
-        if (updateErr.message.includes('UNIQUE')) {
+        if (isUniqueError(updateErr)) {
           return res.status(400).json({ error: "Username sudah digunakan" });
         }
         return res.status(500).json({ error: "Database error" });
@@ -103,12 +100,10 @@ router.put("/:id", authenticate, requireAdmin, (req, res) => {
   });
 });
 
-// DELETE /users/:id — Hapus user
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) return res.status(400).json({ error: "ID tidak valid" });
 
-  // Cegah hapus diri sendiri
   if (id === req.user.id) {
     return res.status(400).json({ error: "Tidak bisa menghapus akun sendiri" });
   }
@@ -124,7 +119,6 @@ router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   });
 });
 
-// GET /users/labs — Daftar lab unik dari semua user
 router.get("/labs", authenticate, requireAdmin, (req, res) => {
   db.all("SELECT DISTINCT lab FROM users WHERE lab != '' ORDER BY lab", [], (err, rows) => {
     if (err) return res.status(500).json({ error: "Database error" });

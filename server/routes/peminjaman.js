@@ -1,11 +1,10 @@
-// ============ PEMINJAMAN ROUTES ============
+
 const express = require('express');
 const { db, addNotification } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /peminjaman — Get all peminjaman with optional search, status, user filter
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
   const status = req.query.status || '';
@@ -52,7 +51,6 @@ router.get("/", authenticate, (req, res) => {
   });
 });
 
-// GET /peminjaman/labs — Daftar lab yang punya data peminjaman
 router.get("/labs", authenticate, (req, res) => {
   db.all("SELECT DISTINCT user_lab as lab FROM peminjaman WHERE user_lab != '' ORDER BY user_lab", [], (err, rows) => {
     if (err) return res.status(500).json({ error: "Database error" });
@@ -60,7 +58,6 @@ router.get("/labs", authenticate, (req, res) => {
   });
 });
 
-// POST /peminjaman — Create new peminjaman
 router.post("/", authenticate, (req, res) => {
   const { nama, barang_id, jumlah, tanggal } = req.body;
 
@@ -101,7 +98,7 @@ router.post("/", authenticate, (req, res) => {
         if (insertErr) {
           return res.status(500).json({ error: "Database error", details: insertErr.message });
         }
-        // Notifikasi
+
         const detail = JSON.stringify({ nama, barang: row.nama, jumlah: jumlahInt, lab: req.user.lab || '' });
         const display = req.user.display_name || req.user.username;
         addNotification('peminjaman', `${display} meminjam ${row.nama}`, detail);
@@ -111,7 +108,6 @@ router.post("/", authenticate, (req, res) => {
   });
 });
 
-// PUT /peminjaman/:id — Return item (mengembalikan barang)
 router.put("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {
@@ -150,7 +146,6 @@ router.put("/:id", authenticate, (req, res) => {
   });
 });
 
-// PATCH /peminjaman/:id — Edit peminjaman details (nama, jumlah)
 router.patch("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {
@@ -221,7 +216,6 @@ router.patch("/:id", authenticate, (req, res) => {
   });
 });
 
-// DELETE /peminjaman/:id — Delete peminjaman (Admin only)
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {

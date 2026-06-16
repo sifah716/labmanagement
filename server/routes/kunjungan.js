@@ -1,11 +1,10 @@
-// ============ KUNJUNGAN ROUTES ============
+
 const express = require('express');
 const { db, addNotification } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /kunjungan — Get all kunjungan with optional search, filter by user/lab
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
   const created_by = req.query.created_by || '';
@@ -44,7 +43,6 @@ router.get("/", authenticate, (req, res) => {
   });
 });
 
-// GET /kunjungan/labs — Daftar lab yang punya data kunjungan
 router.get("/labs", authenticate, (req, res) => {
   db.all("SELECT DISTINCT user_lab as lab FROM kunjungan WHERE user_lab != '' ORDER BY user_lab", [], (err, rows) => {
     if (err) return res.status(500).json({ error: "Database error" });
@@ -52,7 +50,6 @@ router.get("/labs", authenticate, (req, res) => {
   });
 });
 
-// POST /kunjungan — Create new kunjungan
 router.post("/", authenticate, (req, res) => {
   const { nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal } = req.body;
   if (!nama_guru || !kelas_diajar || !jam_mulai || !jam_selesai) {
@@ -69,7 +66,7 @@ router.post("/", authenticate, (req, res) => {
       if (err) {
         return res.status(500).json({ error: "Database error", details: err.message });
       }
-      // Notifikasi
+
       const detail = JSON.stringify({ nama_guru, kelas_diajar, jam_mulai, jam_selesai, lab: req.user.lab || '' });
       const display = req.user.display_name || req.user.username;
       addNotification('kunjungan', `${display} menambahkan kunjungan`, detail);
@@ -78,7 +75,6 @@ router.post("/", authenticate, (req, res) => {
   );
 });
 
-// PUT /kunjungan/:id — Update kunjungan
 router.put("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   const { nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal } = req.body;
@@ -104,7 +100,6 @@ router.put("/:id", authenticate, (req, res) => {
   );
 });
 
-// DELETE /kunjungan/:id — Delete kunjungan (Admin only)
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   if (!id) {
