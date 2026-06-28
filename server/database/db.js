@@ -222,7 +222,7 @@ async function initPostgres() {
 
   try {
     await pool.query(
-      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO NOTHING",
+      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, display_name = EXCLUDED.display_name, lab = EXCLUDED.lab",
       ['admin', adminPassword, 'admin', 'Administrator', 'IT', now]
     );
     console.log('✓ Admin user ready (admin/admin123)');
@@ -230,7 +230,7 @@ async function initPostgres() {
 
   try {
     await pool.query(
-      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO NOTHING",
+      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, display_name = EXCLUDED.display_name, lab = EXCLUDED.lab",
       ['user', userPassword, 'user', 'User Lab', 'Lab Komputer', now]
     );
     console.log('✓ Regular user ready (user/user123)');
