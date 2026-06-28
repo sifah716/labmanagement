@@ -46,8 +46,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   swaggerOptions: { url: '/api-spec/json' }
 }));
 
-initDatabase();
-
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
