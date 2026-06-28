@@ -27,7 +27,10 @@ let pool;
 if (isPostgres) {
 
   const { Pool } = require('pg');
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
 
   db = {
     pool,
@@ -107,6 +110,10 @@ function initDatabase() {
 }
 
 async function initPostgres() {
+  try {
+    const client = await pool.connect();
+    console.log('✓ PostgreSQL connected');
+    client.release();
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -241,7 +248,7 @@ async function initPostgres() {
       "INSERT INTO announcements (title, description, created_at, updated_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
       ["Selamat Datang di Sistem Manajemen Lab", "...", now, now]
     );
-      } catch { /* ignore duplicate */ }
+  } catch { /* ignore duplicate */ }
 
   const barangItems = [
     { nama: "Camera", kode: "CAM001", stok: 5 },
@@ -266,6 +273,9 @@ async function initPostgres() {
   }
 
   console.log('✓ PostgreSQL tables & seed data ready');
+  } catch (err) {
+    console.error('PostgreSQL init error:', err.message || err);
+  }
 }
 
 function initSQLite() {
