@@ -21,7 +21,15 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "style-src": ["'self'", "https:", "'unsafe-inline'"]
+    }
+  }
+}));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 const allowedOrigins = process.env.CORS_ORIGINS
