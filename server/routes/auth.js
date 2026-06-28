@@ -57,7 +57,6 @@ router.post("/login", [
 
       db.run("UPDATE users SET token=?, token_expires_at=? WHERE id=?", [token, tokenExpires, user.id], (updateErr) => {
         if (updateErr) {
-          console.log('Login UPDATE token error:', updateErr.message || updateErr);
           return res.status(500).json({ error: "Database error" });
         }
 

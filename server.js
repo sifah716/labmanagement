@@ -21,22 +21,12 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "script-src": ["'self'", "'unsafe-inline'"],
-      "style-src": ["'self'", "https:", "'unsafe-inline'"],
-      "font-src": ["'self'", "https://fonts.gstatic.com"],
-      "connect-src": ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"]
-    }
-  }
-}));
+app.use(helmet());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(s => s.trim())
-  : ['http://localhost:3000', 'http://localhost:5173', 'https://www.labmanagement.web.id'];
+  : ['http://localhost:3000', 'http://localhost:5173'];
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
