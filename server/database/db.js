@@ -70,7 +70,10 @@ if (isPostgres) {
       const pgSql = sql.replace(/\?/g, () => `$${++idx}`);
       pool.query(pgSql, params)
         .then(result => callback(null, result.rows[0] || null))
-        .catch(err => callback(err));
+        .catch(err => {
+          console.error('PG query error:', err.message || err, 'SQL:', pgSql);
+          callback(err);
+        });
     },
 
     all(sql, params = [], callback) {
@@ -79,7 +82,10 @@ if (isPostgres) {
       const pgSql = sql.replace(/\?/g, () => `$${++idx}`);
       pool.query(pgSql, params)
         .then(result => callback(null, result.rows))
-        .catch(err => callback(err));
+        .catch(err => {
+          console.error('PG all error:', err.message || err, 'SQL:', pgSql);
+          callback(err);
+        });
     },
 
     serialize(fn) { fn(); },
