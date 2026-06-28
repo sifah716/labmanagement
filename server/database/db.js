@@ -150,6 +150,12 @@ async function initPostgres() {
     )
   `);
 
+  // Migration: add missing columns to existing users table
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMP`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT DEFAULT ''`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lab TEXT DEFAULT ''`);
+  console.log('✓ Users table migration completed');
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS barang (
       id SERIAL PRIMARY KEY,
