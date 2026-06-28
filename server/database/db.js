@@ -63,8 +63,8 @@ if (isPostgres) {
           if (callback) callback.call(ctx, null);
         })
         .catch(err => {
+          console.log('PG run error:', err.message || err, 'SQL:', query);
           if (callback) callback(err);
-          else console.log('DB run error:', err.message || err);
         });
     },
 
