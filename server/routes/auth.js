@@ -45,7 +45,7 @@ router.post("/login", [
     [username],
     (err, user) => {
       if (err) {
-        console.error('Login DB error:', err.message || err);
+        console.log('Login DB error:', err.message || err);
         return res.status(500).json({ error: "Database error" });
       }
       if (!user || !comparePassword(password, user.password)) {
