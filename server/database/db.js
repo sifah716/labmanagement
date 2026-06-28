@@ -110,9 +110,13 @@ if (isPostgres) {
 
 function initDatabase() {
   if (isPostgres) {
-    initPostgres().catch(err => { console.error('PostgreSQL init error:', err); });
+    return initPostgres().catch(err => {
+      console.error('PostgreSQL init error:', err);
+      throw err;
+    });
   } else {
     initSQLite();
+    return Promise.resolve();
   }
 }
 

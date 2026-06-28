@@ -96,12 +96,17 @@ process.on('SIGINT', () => {
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-app.listen(PORT, HOST, () => {
-  console.log('=================================');
-  console.log('Lab Management System');
-  console.log('=================================');
-  console.log(`Server running at http://${HOST}:${PORT}`);
-  console.log('✓ Database initialized');
-  console.log('✓ Routes loaded');
-  console.log('✓ Ready to accept connections');
+initDatabase().then(() => {
+  app.listen(PORT, HOST, () => {
+    console.log('=================================');
+    console.log('Lab Management System');
+    console.log('=================================');
+    console.log(`Server running at http://${HOST}:${PORT}`);
+    console.log('✓ Database initialized');
+    console.log('✓ Routes loaded');
+    console.log('✓ Ready to accept connections');
+  });
+}).catch(err => {
+  console.error('Failed to initialize database:', err.message || err);
+  process.exit(1);
 });
