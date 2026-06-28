@@ -1,5 +1,6 @@
 
 const express = require('express');
+const { body, validationResult } = require('express-validator');
 const { db, addNotification } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
@@ -11,44 +12,45 @@ router.get("/", authenticate, (req, res) => {
   const created_by = req.query.created_by || '';
   const user_lab = req.query.user_lab || '';
 
-  let query = `
-    SELECT p.*, b.nama as barang_nama, b.kode as barang_kode,
-           u.display_name as display_name, u.lab as creator_lab
-    FROM peminjaman p
-    JOIN barang b ON p.barang_id = b.id
-    LEFT JOIN users u ON p.created_by = u.id
-    WHERE 1=1
-  `;
+  const baseFrom = " FROM peminjaman p JOIN barang b ON p.barang_id = b.id LEFT JOIN users u ON p.created_by = u.id";
+  let whereClause = " WHERE 1=1";
   let params = [];
 
   if (search) {
-    query += " AND (p.nama LIKE ? OR b.nama LIKE ?)";
+    whereClause += " AND (p.nama LIKE ? OR b.nama LIKE ?)";
     params.push(`%${search}%`, `%${search}%`);
   }
-
   if (status) {
-    query += " AND p.status = ?";
+    whereClause += " AND p.status = ?";
     params.push(status);
   }
-
   if (created_by) {
-    query += " AND u.username = ?";
+    whereClause += " AND u.username = ?";
     params.push(created_by);
   }
-
   if (user_lab) {
-    query += " AND p.user_lab = ?";
+    whereClause += " AND p.user_lab = ?";
     params.push(user_lab);
   }
 
-  query += " ORDER BY p.waktu_pinjam DESC";
+  if (req.query.page) {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
 
-  db.all(query, params, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: "Database error", details: err.message });
-    }
-    res.json(rows || []);
-  });
+    db.get(`SELECT COUNT(*) as total${baseFrom}${whereClause}`, params, (countErr, countRow) => {
+      if (countErr) return res.status(500).json({ error: "Database error", details: countErr.message });
+      db.all(`SELECT p.*, b.nama as barang_nama, b.kode as barang_kode, u.display_name as display_name, u.lab as creator_lab${baseFrom}${whereClause} ORDER BY p.waktu_pinjam DESC LIMIT ? OFFSET ?`, [...params, limit, offset], (err, rows) => {
+        if (err) return res.status(500).json({ error: "Database error", details: err.message });
+        res.json({ data: rows || [], pagination: { page, limit, total: countRow.total, totalPages: Math.ceil(countRow.total / limit) } });
+      });
+    });
+  } else {
+    db.all(`SELECT p.*, b.nama as barang_nama, b.kode as barang_kode, u.display_name as display_name, u.lab as creator_lab${baseFrom}${whereClause} ORDER BY p.waktu_pinjam DESC`, params, (err, rows) => {
+      if (err) return res.status(500).json({ error: "Database error", details: err.message });
+      res.json(rows || []);
+    });
+  }
 });
 
 router.get("/labs", authenticate, (req, res) => {
@@ -58,17 +60,18 @@ router.get("/labs", authenticate, (req, res) => {
   });
 });
 
-router.post("/", authenticate, (req, res) => {
+router.post("/", authenticate, [
+  body('nama').trim().notEmpty().withMessage('Nama peminjam harus diisi'),
+  body('barang_id').isInt({ min: 1 }).withMessage('Barang harus dipilih'),
+  body('jumlah').isInt({ min: 1 }).withMessage('Jumlah harus lebih dari 0')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg });
+  }
   const { nama, barang_id, jumlah, tanggal } = req.body;
 
-  if (!nama || !barang_id || jumlah === undefined || jumlah === null) {
-    return res.status(400).json({ error: "Field tidak lengkap" });
-  }
-
   const jumlahInt = parseInt(jumlah);
-  if (jumlahInt <= 0) {
-    return res.status(400).json({ error: "Jumlah harus lebih dari 0" });
-  }
 
   const waktu_pinjam = tanggal ? new Date(tanggal).toISOString() : new Date().toISOString();
   const now = new Date().toISOString();

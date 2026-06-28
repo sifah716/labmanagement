@@ -1,29 +1,41 @@
 
 const express = require('express');
+const { body, validationResult } = require('express-validator');
 const { db } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  db.all(
-    "SELECT id, title, description, updated_at FROM announcements ORDER BY id DESC",
-    [],
-    (err, rows) => {
-      if (err) {
-        return res.status(500).json({ error: "Database error", details: err.message });
-      }
+  if (req.query.page) {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    db.get("SELECT COUNT(*) as total FROM announcements", [], (countErr, countRow) => {
+      if (countErr) return res.status(500).json({ error: "Database error", details: countErr.message });
+      db.all("SELECT id, title, description, updated_at FROM announcements ORDER BY id DESC LIMIT ? OFFSET ?", [limit, offset], (err, rows) => {
+        if (err) return res.status(500).json({ error: "Database error", details: err.message });
+        res.json({ data: rows || [], pagination: { page, limit, total: countRow.total, totalPages: Math.ceil(countRow.total / limit) } });
+      });
+    });
+  } else {
+    db.all("SELECT id, title, description, updated_at FROM announcements ORDER BY id DESC", [], (err, rows) => {
+      if (err) return res.status(500).json({ error: "Database error", details: err.message });
       res.json(rows || []);
-    }
-  );
+    });
+  }
 });
 
-router.post("/", authenticate, requireAdmin, (req, res) => {
-  const { title, description } = req.body;
-
-  if (!title || !description) {
-    return res.status(400).json({ error: "Title dan description harus diisi" });
+router.post("/", authenticate, requireAdmin, [
+  body('title').trim().notEmpty().withMessage('Title harus diisi'),
+  body('description').trim().notEmpty().withMessage('Description harus diisi')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg });
   }
+  const { title, description } = req.body;
 
   const now = new Date().toISOString();
 
@@ -39,13 +51,16 @@ router.post("/", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-router.put("/:id", authenticate, requireAdmin, (req, res) => {
+router.put("/:id", authenticate, requireAdmin, [
+  body('title').trim().notEmpty().withMessage('Title harus diisi'),
+  body('description').trim().notEmpty().withMessage('Description harus diisi')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg });
+  }
   const id = parseInt(req.params.id);
   const { title, description } = req.body;
-
-  if (!id || !title || !description) {
-    return res.status(400).json({ error: "ID, title, dan description harus diisi" });
-  }
 
   const now = new Date().toISOString();
 

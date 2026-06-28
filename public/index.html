@@ -43,6 +43,12 @@
 
   <script src="/assets/js/config.js"></script>
   <script>
+    if (localStorage.getItem('token')) {
+      sessionStorage.setItem('token', localStorage.getItem('token'));
+      sessionStorage.setItem('user', localStorage.getItem('user'));
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
     async function handleLogin(e) {
       e.preventDefault();
 
@@ -65,8 +71,8 @@
           return;
         }
 
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('user', JSON.stringify(data.user));
 
         if (data.user.role === 'admin') {
           window.location.href = '/pages/admin/dashboard.html';
@@ -80,18 +86,18 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (token) {
         try {
-          const user = JSON.parse(localStorage.getItem('user'));
+          const user = JSON.parse(sessionStorage.getItem('user'));
           if (user && user.role === 'admin') {
             window.location.href = '/pages/admin/dashboard.html';
           } else if (user) {
             window.location.href = '/pages/user/dashboard.html';
           }
         } catch (e) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
         }
       }
     });

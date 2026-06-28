@@ -1,5 +1,6 @@
 
 const express = require('express');
+const { body, validationResult } = require('express-validator');
 const { db, isUniqueError } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
@@ -7,32 +8,45 @@ const router = express.Router();
 
 router.get("/", authenticate, (req, res) => {
   const search = req.query.search || '';
-  let query = "SELECT * FROM barang";
-  let params = [];
 
+  let whereClause = '';
+  let params = [];
   if (search) {
-    query += " WHERE nama LIKE ? OR kode LIKE ?";
+    whereClause = " WHERE nama LIKE ? OR kode LIKE ?";
     params = [`%${search}%`, `%${search}%`];
   }
 
-  query += " ORDER BY nama ASC";
+  if (req.query.page) {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
 
-  db.all(query, params, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: "Database error", details: err.message });
-    }
-    res.json(rows || []);
-  });
+    db.get(`SELECT COUNT(*) as total FROM barang${whereClause}`, params, (countErr, countRow) => {
+      if (countErr) return res.status(500).json({ error: "Database error", details: countErr.message });
+      db.all(`SELECT * FROM barang${whereClause} ORDER BY nama ASC LIMIT ? OFFSET ?`, [...params, limit, offset], (err, rows) => {
+        if (err) return res.status(500).json({ error: "Database error", details: err.message });
+        res.json({ data: rows || [], pagination: { page, limit, total: countRow.total, totalPages: Math.ceil(countRow.total / limit) } });
+      });
+    });
+  } else {
+    let query = "SELECT * FROM barang" + whereClause + " ORDER BY nama ASC";
+    db.all(query, params, (err, rows) => {
+      if (err) return res.status(500).json({ error: "Database error", details: err.message });
+      res.json(rows || []);
+    });
+  }
 });
 
-router.post("/", authenticate, requireAdmin, (req, res) => {
+router.post("/", authenticate, requireAdmin, [
+  body('nama').trim().notEmpty().withMessage('Nama barang harus diisi'),
+  body('kode').trim().notEmpty().withMessage('Kode barang harus diisi'),
+  body('stok').isInt({ min: 0 }).withMessage('Stok harus angka >= 0')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg });
+  }
   const { nama, kode, stok } = req.body;
-  if (!nama || !kode || stok === undefined || stok === null) {
-    return res.status(400).json({ error: "Field nama, kode, dan stok harus diisi" });
-  }
-  if (stok < 0) {
-    return res.status(400).json({ error: "Stok tidak boleh negatif" });
-  }
 
   const now = new Date().toISOString();
   db.run(
@@ -50,17 +64,17 @@ router.post("/", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-router.put("/:id", authenticate, requireAdmin, (req, res) => {
+router.put("/:id", authenticate, requireAdmin, [
+  body('nama').trim().notEmpty().withMessage('Nama barang harus diisi'),
+  body('kode').trim().notEmpty().withMessage('Kode barang harus diisi'),
+  body('stok').isInt({ min: 0 }).withMessage('Stok harus angka >= 0')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg });
+  }
   const id = parseInt(req.params.id);
   const { nama, kode, stok } = req.body;
-
-  if (!id || !nama || !kode || stok === undefined || stok === null) {
-    return res.status(400).json({ error: "Field tidak lengkap" });
-  }
-
-  if (stok < 0) {
-    return res.status(400).json({ error: "Stok tidak boleh negatif" });
-  }
 
   const now = new Date().toISOString();
   db.run(
@@ -83,7 +97,7 @@ router.put("/:id", authenticate, requireAdmin, (req, res) => {
 
 router.delete("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
-  if (!id) {
+  if (!id || isNaN(id) || id <= 0) {
     return res.status(400).json({ error: "ID tidak valid" });
   }
 

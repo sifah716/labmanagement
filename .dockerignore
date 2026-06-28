@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.git
+.github
+__tests__
+data/*.db
+logs
+*.md

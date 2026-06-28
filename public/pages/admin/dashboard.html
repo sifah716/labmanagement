@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <script>try { var u=JSON.parse(localStorage.getItem('user')); if (!u||u.role!=='admin') window.location.href='/'; }catch(e){window.location.href='/';}</script>
+  <script>try { if (localStorage.getItem('token')) { sessionStorage.setItem('token', localStorage.getItem('token')); sessionStorage.setItem('user', localStorage.getItem('user')); localStorage.removeItem('token'); localStorage.removeItem('user'); } var u=JSON.parse(sessionStorage.getItem('user')); if (!u||u.role!=='admin') window.location.href='/'; }catch(e){window.location.href='/';}</script>
 
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/assets/css/main.css">
@@ -340,6 +340,14 @@
 </div>
 
 <script src="/assets/js/config.js"></script>
+<script src="/assets/js/modules/shared.js"></script>
+<script src="/assets/js/modules/dashboard.js"></script>
+<script src="/assets/js/modules/barang.js"></script>
+<script src="/assets/js/modules/kunjungan.js"></script>
+<script src="/assets/js/modules/peminjaman.js"></script>
+<script src="/assets/js/modules/pengumuman.js"></script>
+<script src="/assets/js/modules/users.js"></script>
+<script src="/assets/js/modules/notifications.js"></script>
 <script src="/assets/js/app.js"></script>
 
 <script>
