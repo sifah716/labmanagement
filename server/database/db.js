@@ -37,10 +37,6 @@ if (isPostgres) {
   }
 
   pool = new Pool(pgConfig);
-  pool.on('error', (err) => console.log('PG pool error:', err.message || err));
-  setInterval(() => {
-    pool.query('SELECT 1').catch(() => {});
-  }, 30000);
   console.log('✓ PostgreSQL pool created');
 
   db = {
@@ -64,7 +60,7 @@ if (isPostgres) {
         })
         .catch(err => {
           if (callback) callback(err);
-          else console.log('DB run error:', err.message || err);
+          else console.error('DB run error:', err);
         });
     },
 
@@ -75,7 +71,7 @@ if (isPostgres) {
       pool.query(pgSql, params)
         .then(result => callback(null, result.rows[0] || null))
         .catch(err => {
-          console.log('PG query error:', err.message || err, 'SQL:', pgSql);
+          console.error('PG query error:', err.message || err, 'SQL:', pgSql);
           callback(err);
         });
     },
@@ -87,7 +83,7 @@ if (isPostgres) {
       pool.query(pgSql, params)
         .then(result => callback(null, result.rows))
         .catch(err => {
-          console.log('PG all error:', err.message || err, 'SQL:', pgSql);
+          console.error('PG all error:', err.message || err, 'SQL:', pgSql);
           callback(err);
         });
     },
