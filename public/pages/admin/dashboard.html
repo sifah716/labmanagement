@@ -15,7 +15,33 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <script>try { if (localStorage.getItem('token')) { sessionStorage.setItem('token', localStorage.getItem('token')); sessionStorage.setItem('user', localStorage.getItem('user')); localStorage.removeItem('token'); localStorage.removeItem('user'); } var u=JSON.parse(sessionStorage.getItem('user')); if (!u||u.role!=='admin') window.location.href='/'; }catch(e){window.location.href='/';}</script>
+  <script>
+    try { 
+      if (localStorage.getItem('token')) { 
+        sessionStorage.setItem('token', localStorage.getItem('token')); 
+        sessionStorage.setItem('user', localStorage.getItem('user')); 
+        localStorage.removeItem('token'); 
+        localStorage.removeItem('user'); 
+      }
+      var userStr = sessionStorage.getItem('user');
+      if (!userStr) {
+        alert('DEBUG: No user in sessionStorage');
+        window.location.href='/';
+      }
+      var u = JSON.parse(userStr);
+      if (!u) {
+        alert('DEBUG: User parse failed');
+        window.location.href='/';
+      }
+      if (u.role !== 'admin') {
+        alert('DEBUG: Role is not admin: ' + u.role);
+        window.location.href='/';
+      }
+    } catch(e) {
+      alert('DEBUG: Auth error: ' + e.message);
+      window.location.href='/';
+    }
+  </script>
 
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/assets/css/main.css">
