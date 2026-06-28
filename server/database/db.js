@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const path = require("path");
 const fs = require("fs");
 
-const isPostgres = !!process.env.DATABASE_URL;
+const isPostgres = !!process.env.DATABASE_URL || !!process.env.PGHOST;
 const SALT_ROUNDS = 10;
 
 function hashPassword(password) {
@@ -25,12 +25,19 @@ let db;
 let pool;
 
 if (isPostgres) {
+  console.log('✓ PostgreSQL mode detected');
 
   const { Pool } = require('pg');
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
+  const pgConfig = process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+    : { host: process.env.PGHOST, port: parseInt(process.env.PGPORT) || 5432, user: process.env.PGUSER, password: process.env.PGPASSWORD, database: process.env.PGDATABASE, ssl: { rejectUnauthorized: false } };
+
+  if (!process.env.DATABASE_URL) {
+    console.log('✓ Using PostgreSQL from PGHOST/PGUSER/PGPASSWORD/PGDATABASE');
+  }
+
+  pool = new Pool(pgConfig);
+  console.log('✓ PostgreSQL pool created');
 
   db = {
     pool,
