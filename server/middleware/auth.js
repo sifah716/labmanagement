@@ -13,10 +13,6 @@ function authenticate(req, res, next) {
     if (err || !user) {
       return res.status(401).json({ error: "Invalid token" });
     }
-    if (user.token_expires_at && new Date(user.token_expires_at) < new Date()) {
-      db.run("UPDATE users SET token=NULL, token_expires_at=NULL WHERE id=?", [user.id]);
-      return res.status(401).json({ error: "Token expired, silakan login ulang" });
-    }
     req.user = user;
     next();
   });

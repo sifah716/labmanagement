@@ -1,6 +1,5 @@
 
 const express = require('express');
-const { body, validationResult } = require('express-validator');
 const { db, addNotification } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
@@ -11,41 +10,37 @@ router.get("/", authenticate, (req, res) => {
   const created_by = req.query.created_by || '';
   const user_lab = req.query.user_lab || '';
 
-  const baseFrom = " FROM kunjungan k LEFT JOIN users u ON k.created_by = u.id";
-  let whereClause = " WHERE 1=1";
+  let query = `
+    SELECT k.*, u.display_name as display_name, u.lab as creator_lab
+    FROM kunjungan k
+    LEFT JOIN users u ON k.created_by = u.id
+    WHERE 1=1
+  `;
   let params = [];
 
   if (search) {
-    whereClause += " AND (k.nama_guru LIKE ? OR k.kelas_diajar LIKE ?)";
+    query += " AND (k.nama_guru LIKE ? OR k.kelas_diajar LIKE ?)";
     params.push(`%${search}%`, `%${search}%`);
   }
+
   if (created_by) {
-    whereClause += " AND u.username = ?";
+    query += " AND u.username = ?";
     params.push(created_by);
   }
+
   if (user_lab) {
-    whereClause += " AND k.user_lab = ?";
+    query += " AND k.user_lab = ?";
     params.push(user_lab);
   }
 
-  if (req.query.page) {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
-    const offset = (page - 1) * limit;
+  query += " ORDER BY k.tanggal DESC, k.jam_mulai DESC";
 
-    db.get(`SELECT COUNT(*) as total${baseFrom}${whereClause}`, params, (countErr, countRow) => {
-      if (countErr) return res.status(500).json({ error: "Database error", details: countErr.message });
-      db.all(`SELECT k.*, u.display_name as display_name, u.lab as creator_lab${baseFrom}${whereClause} ORDER BY k.tanggal DESC, k.jam_mulai DESC LIMIT ? OFFSET ?`, [...params, limit, offset], (err, rows) => {
-        if (err) return res.status(500).json({ error: "Database error", details: err.message });
-        res.json({ data: rows || [], pagination: { page, limit, total: countRow.total, totalPages: Math.ceil(countRow.total / limit) } });
-      });
-    });
-  } else {
-    db.all(`SELECT k.*, u.display_name as display_name, u.lab as creator_lab${baseFrom}${whereClause} ORDER BY k.tanggal DESC, k.jam_mulai DESC`, params, (err, rows) => {
-      if (err) return res.status(500).json({ error: "Database error", details: err.message });
-      res.json(rows || []);
-    });
-  }
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: "Database error", details: err.message });
+    }
+    res.json(rows || []);
+  });
 });
 
 router.get("/labs", authenticate, (req, res) => {
@@ -55,17 +50,11 @@ router.get("/labs", authenticate, (req, res) => {
   });
 });
 
-router.post("/", authenticate, [
-  body('nama_guru').trim().notEmpty().withMessage('Nama guru harus diisi'),
-  body('kelas_diajar').trim().notEmpty().withMessage('Kelas diajar harus diisi'),
-  body('jam_mulai').trim().notEmpty().withMessage('Jam mulai harus diisi'),
-  body('jam_selesai').trim().notEmpty().withMessage('Jam selesai harus diisi')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.post("/", authenticate, (req, res) => {
   const { nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal } = req.body;
+  if (!nama_guru || !kelas_diajar || !jam_mulai || !jam_selesai) {
+    return res.status(400).json({ error: "Semua field harus diisi" });
+  }
 
   const tanggalKunjung = tanggal ? tanggal : new Date().toISOString().split('T')[0];
   const now = new Date().toISOString();
@@ -86,18 +75,13 @@ router.post("/", authenticate, [
   );
 });
 
-router.put("/:id", authenticate, [
-  body('nama_guru').trim().notEmpty().withMessage('Nama guru harus diisi'),
-  body('kelas_diajar').trim().notEmpty().withMessage('Kelas diajar harus diisi'),
-  body('jam_mulai').trim().notEmpty().withMessage('Jam mulai harus diisi'),
-  body('jam_selesai').trim().notEmpty().withMessage('Jam selesai harus diisi')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.put("/:id", authenticate, (req, res) => {
   const id = parseInt(req.params.id);
   const { nama_guru, kelas_diajar, jam_mulai, jam_selesai, tanggal } = req.body;
+
+  if (!id || !nama_guru || !kelas_diajar || !jam_mulai || !jam_selesai) {
+    return res.status(400).json({ error: "Field tidak lengkap" });
+  }
 
   const tanggalKunjung = tanggal ? tanggal : new Date().toISOString().split('T')[0];
 

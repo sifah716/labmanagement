@@ -1,17 +1,12 @@
 
-const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 
-const isPostgres = !!process.env.DATABASE_URL || !!process.env.PGHOST;
-const SALT_ROUNDS = 10;
+const isPostgres = !!process.env.DATABASE_URL;
 
 function hashPassword(password) {
-  return bcrypt.hashSync(password, SALT_ROUNDS);
-}
-
-function comparePassword(password, hash) {
-  return bcrypt.compareSync(password, hash);
+  return crypto.createHash('sha256').update(password).digest('hex');
 }
 
 function isUniqueError(err) {
@@ -25,19 +20,9 @@ let db;
 let pool;
 
 if (isPostgres) {
-  console.log('✓ PostgreSQL mode detected');
 
   const { Pool } = require('pg');
-  const pgConfig = process.env.DATABASE_URL
-    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
-    : { host: process.env.PGHOST, port: parseInt(process.env.PGPORT) || 5432, user: process.env.PGUSER, password: process.env.PGPASSWORD, database: process.env.PGDATABASE, ssl: { rejectUnauthorized: false } };
-
-  if (!process.env.DATABASE_URL) {
-    console.log('✓ Using PostgreSQL from PGHOST/PGUSER/PGPASSWORD/PGDATABASE');
-  }
-
-  pool = new Pool(pgConfig);
-  console.log('✓ PostgreSQL pool created');
+  pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
   db = {
     pool,
@@ -70,10 +55,7 @@ if (isPostgres) {
       const pgSql = sql.replace(/\?/g, () => `$${++idx}`);
       pool.query(pgSql, params)
         .then(result => callback(null, result.rows[0] || null))
-        .catch(err => {
-          console.error('PG query error:', err.message || err, 'SQL:', pgSql);
-          callback(err);
-        });
+        .catch(err => callback(err));
     },
 
     all(sql, params = [], callback) {
@@ -82,10 +64,7 @@ if (isPostgres) {
       const pgSql = sql.replace(/\?/g, () => `$${++idx}`);
       pool.query(pgSql, params)
         .then(result => callback(null, result.rows))
-        .catch(err => {
-          console.error('PG all error:', err.message || err, 'SQL:', pgSql);
-          callback(err);
-        });
+        .catch(err => callback(err));
     },
 
     serialize(fn) { fn(); },
@@ -116,21 +95,13 @@ if (isPostgres) {
 
 function initDatabase() {
   if (isPostgres) {
-    return initPostgres().catch(err => {
-      console.error('PostgreSQL init error:', err);
-      throw err;
-    });
+    initPostgres().catch(err => { console.error('PostgreSQL init error:', err); });
   } else {
     initSQLite();
-    return Promise.resolve();
   }
 }
 
 async function initPostgres() {
-  try {
-    const client = await pool.connect();
-    console.log('✓ PostgreSQL connected');
-    client.release();
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -139,7 +110,6 @@ async function initPostgres() {
       password VARCHAR(255) NOT NULL,
       role VARCHAR(50) NOT NULL DEFAULT 'user',
       token TEXT,
-      token_expires_at TIMESTAMP,
       display_name TEXT DEFAULT '',
       lab TEXT DEFAULT '',
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -246,7 +216,7 @@ async function initPostgres() {
 
   try {
     await pool.query(
-      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, display_name = EXCLUDED.display_name, lab = EXCLUDED.lab",
+      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO NOTHING",
       ['admin', adminPassword, 'admin', 'Administrator', 'IT', now]
     );
     console.log('✓ Admin user ready (admin/admin123)');
@@ -254,7 +224,7 @@ async function initPostgres() {
 
   try {
     await pool.query(
-      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, display_name = EXCLUDED.display_name, lab = EXCLUDED.lab",
+      "INSERT INTO users (username, password, role, display_name, lab, created_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (username) DO NOTHING",
       ['user', userPassword, 'user', 'User Lab', 'Lab Komputer', now]
     );
     console.log('✓ Regular user ready (user/user123)');
@@ -265,7 +235,7 @@ async function initPostgres() {
       "INSERT INTO announcements (title, description, created_at, updated_at) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
       ["Selamat Datang di Sistem Manajemen Lab", "...", now, now]
     );
-  } catch { /* ignore duplicate */ }
+  } catch (e) {  }
 
   const barangItems = [
     { nama: "Camera", kode: "CAM001", stok: 5 },
@@ -286,16 +256,15 @@ async function initPostgres() {
         "INSERT INTO barang (nama, kode, stok, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (kode) DO NOTHING",
         [item.nama, item.kode, item.stok, now, now]
       );
-    } catch { /* ignore duplicate */ }
+    } catch (e) {  }
   }
 
   console.log('✓ PostgreSQL tables & seed data ready');
-  } catch (err) {
-    console.error('PostgreSQL init error:', err.message || err);
-  }
 }
 
 function initSQLite() {
+
+  const sqlite3 = require("sqlite3").verbose();
 
   db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -304,13 +273,10 @@ function initSQLite() {
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       token TEXT,
-      token_expires_at TEXT,
       display_name TEXT DEFAULT '',
       lab TEXT DEFAULT '',
       created_at TEXT NOT NULL
     )`);
-
-    db.run("ALTER TABLE users ADD COLUMN token_expires_at TEXT", () => {});
 
     db.run(`CREATE TABLE IF NOT EXISTS barang (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -328,8 +294,6 @@ function initSQLite() {
       jam_mulai TEXT NOT NULL,
       jam_selesai TEXT NOT NULL,
       tanggal TEXT NOT NULL,
-      created_by INTEGER REFERENCES users(id),
-      user_lab TEXT DEFAULT '',
       created_at TEXT NOT NULL
     )`);
 
@@ -341,22 +305,14 @@ function initSQLite() {
       status TEXT NOT NULL DEFAULT 'dipinjam' CHECK(status IN ('dipinjam', 'kembali')),
       waktu_pinjam TEXT NOT NULL,
       waktu_kembali TEXT,
-      created_by INTEGER REFERENCES users(id),
-      user_lab TEXT DEFAULT '',
       created_at TEXT NOT NULL,
       FOREIGN KEY(barang_id) REFERENCES barang(id) ON DELETE CASCADE
     )`);
 
     db.run("CREATE INDEX IF NOT EXISTS idx_peminjaman_status ON peminjaman(status)");
     db.run("CREATE INDEX IF NOT EXISTS idx_peminjaman_barang ON peminjaman(barang_id)");
-    db.run("CREATE INDEX IF NOT EXISTS idx_peminjaman_created ON peminjaman(created_by)");
-    db.run("CREATE INDEX IF NOT EXISTS idx_peminjaman_lab ON peminjaman(user_lab)");
     db.run("CREATE INDEX IF NOT EXISTS idx_kunjungan_tanggal ON kunjungan(tanggal)");
-    db.run("CREATE INDEX IF NOT EXISTS idx_kunjungan_created ON kunjungan(created_by)");
-    db.run("CREATE INDEX IF NOT EXISTS idx_kunjungan_lab ON kunjungan(user_lab)");
     db.run("CREATE INDEX IF NOT EXISTS idx_users_token ON users(token)");
-    db.run("CREATE INDEX IF NOT EXISTS idx_barang_nama ON barang(nama)");
-    db.run("CREATE INDEX IF NOT EXISTS idx_barang_kode ON barang(kode)");
 
     db.run(`CREATE TABLE IF NOT EXISTS reset_tokens (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -399,7 +355,17 @@ function initSQLite() {
       updated_at TEXT NOT NULL
     )`);
 
-    runMigrations();
+    const migrations = [
+      "ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''",
+      "ALTER TABLE users ADD COLUMN lab TEXT DEFAULT ''",
+      "ALTER TABLE kunjungan ADD COLUMN created_by INTEGER REFERENCES users(id)",
+      "ALTER TABLE kunjungan ADD COLUMN user_lab TEXT DEFAULT ''",
+      "ALTER TABLE peminjaman ADD COLUMN created_by INTEGER REFERENCES users(id)",
+      "ALTER TABLE peminjaman ADD COLUMN user_lab TEXT DEFAULT ''"
+    ];
+    migrations.forEach(sql => {
+      db.run(sql, function(err) { if (err) {  } });
+    });
 
     db.run("UPDATE users SET display_name='Administrator', lab='IT' WHERE username='admin' AND display_name=''");
     db.run("UPDATE users SET display_name='User Lab', lab='Lab Komputer' WHERE username='user' AND display_name=''");
@@ -475,38 +441,9 @@ function addNotification(type, message, detail = '') {
   }
 }
 
-function runMigrations() {
-  const migDir = path.join(__dirname, 'migrations');
-  if (!fs.existsSync(migDir)) return;
-
-  db.run(`CREATE TABLE IF NOT EXISTS _migrations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,
-    applied_at TEXT NOT NULL
-  )`);
-
-  const files = fs.readdirSync(migDir).filter(f => f.endsWith('.sql')).sort();
-  files.forEach(file => {
-    db.get("SELECT id FROM _migrations WHERE name=?", [file], (err, row) => {
-      if (err) return;
-      if (row) return;
-      const sql = fs.readFileSync(path.join(migDir, file), 'utf8');
-      db.exec(sql, (execErr) => {
-        if (execErr && !execErr.message.includes('duplicate column')) {
-          console.error(`Migration ${file} error:`, execErr.message);
-          return;
-        }
-        db.run("INSERT INTO _migrations (name, applied_at) VALUES (?, ?)", [file, new Date().toISOString()]);
-        console.log(`✓ Migration applied: ${file}`);
-      });
-    });
-  });
-}
-
 module.exports = {
   db,
   hashPassword,
-  comparePassword,
   isUniqueError,
   initDatabase,
   closeDatabase,

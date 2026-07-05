@@ -1,61 +1,34 @@
 
 const express = require('express');
 const crypto = require('crypto');
-const { body, validationResult } = require('express-validator');
-const { db, hashPassword, comparePassword, addNotification } = require('../database/db');
+const { db, hashPassword, addNotification } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-/**
- * @openapi
- * /auth/login:
- *   post:
- *     tags: [Auth]
- *     summary: Login user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username: { type: string }
- *               password: { type: string }
- *     responses:
- *       200:
- *         description: Login berhasil
- *       401:
- *         description: Username atau password salah
- *       429:
- *         description: Terlalu banyak percobaan
- */
-router.post("/login", [
-  body('username').trim().notEmpty().withMessage('Username harus diisi'),
-  body('password').notEmpty().withMessage('Password harus diisi')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username dan password harus diisi" });
+  }
+
+  const hashedPassword = hashPassword(password);
+
   db.get(
-    "SELECT id, username, password, role, display_name, lab FROM users WHERE username=?",
-    [username],
+    "SELECT id, username, role, display_name, lab FROM users WHERE username=? AND password=?",
+    [username, hashedPassword],
     (err, user) => {
       if (err) {
-        console.error('Login DB error:', err.message || err);
         return res.status(500).json({ error: "Database error" });
       }
-      if (!user || !comparePassword(password, user.password)) {
+      if (!user) {
         return res.status(401).json({ error: "Username atau password salah" });
       }
 
       const token = crypto.randomBytes(32).toString('hex');
-      const tokenExpires = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
 
-      db.run("UPDATE users SET token=?, token_expires_at=? WHERE id=?", [token, tokenExpires, user.id], (updateErr) => {
+      db.run("UPDATE users SET token=? WHERE id=?", [token, user.id], (updateErr) => {
         if (updateErr) {
           return res.status(500).json({ error: "Database error" });
         }
@@ -95,16 +68,7 @@ router.get("/me", authenticate, (req, res) => {
   });
 });
 
-router.put("/profile", authenticate, [
-  body('display_name').optional().trim(),
-  body('lab').optional().trim(),
-  body('current_password').optional(),
-  body('new_password').if(body('current_password').exists()).isLength({ min: 6 }).withMessage('Password baru minimal 6 karakter')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.put("/profile", authenticate, (req, res) => {
   const { display_name, lab, current_password, new_password } = req.body;
 
   if (!display_name && !lab && !new_password) {
@@ -115,8 +79,12 @@ router.put("/profile", authenticate, [
     if (!current_password) {
       return res.status(400).json({ error: "Password saat ini harus diisi untuk mengganti password" });
     }
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: "Password baru minimal 6 karakter" });
+    }
 
-    if (!comparePassword(current_password, req.user.password)) {
+    const hashedCurrent = hashPassword(current_password);
+    if (hashedCurrent !== req.user.password) {
       return res.status(400).json({ error: "Password saat ini salah" });
     }
   }
@@ -164,16 +132,6 @@ router.put("/profile", authenticate, [
   });
 });
 
-/**
- * @openapi
- * /auth/health:
- *   get:
- *     tags: [System]
- *     summary: Cek status server
- *     responses:
- *       200:
- *         description: Server OK
- */
 router.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
@@ -182,14 +140,12 @@ router.get("/health", (req, res) => {
   });
 });
 
-router.post("/forgot-password", [
-  body('username').trim().notEmpty().withMessage('Username harus diisi')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.post("/forgot-password", (req, res) => {
   const { username } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ error: "Username harus diisi" });
+  }
 
   db.get("SELECT id, username FROM users WHERE username=?", [username], (err, user) => {
     if (err) {
@@ -237,16 +193,11 @@ router.get("/reset-requests", authenticate, requireAdmin, (req, res) => {
   );
 });
 
-router.post("/reset-requests/:id/approve", authenticate, requireAdmin, [
-  body('newPassword').isLength({ min: 6 }).withMessage('Password baru minimal 6 karakter')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.post("/reset-requests/:id/approve", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   const { newPassword } = req.body;
   if (!id) return res.status(400).json({ error: "ID tidak valid" });
+  if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: "Password baru minimal 6 karakter" });
 
   db.get("SELECT * FROM reset_requests WHERE id=? AND status='pending'", [id], (err, request) => {
     if (err) return res.status(500).json({ error: "Database error" });
@@ -280,15 +231,16 @@ router.post("/reset-requests/:id/deny", authenticate, requireAdmin, (req, res) =
   );
 });
 
-router.post("/reset-password", [
-  body('token').notEmpty().withMessage('Token harus diisi'),
-  body('password').isLength({ min: 6 }).withMessage('Password minimal 6 karakter')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.post("/reset-password", (req, res) => {
   const { token, password } = req.body;
+
+  if (!token || !password) {
+    return res.status(400).json({ error: "Token dan password baru harus diisi" });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password minimal 6 karakter" });
+  }
 
   const now = new Date().toISOString();
 
@@ -324,26 +276,11 @@ router.post("/reset-password", [
 });
 
 router.get("/notifications", authenticate, requireAdmin, (req, res) => {
-  if (req.query.page) {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
-    const offset = (page - 1) * limit;
-
-    db.get("SELECT COUNT(*) as total FROM notifications", [], (countErr, countRow) => {
-      if (countErr) return res.status(500).json({ error: "Database error" });
-      db.all("SELECT * FROM notifications ORDER BY created_at DESC LIMIT ? OFFSET ?", [limit, offset], (err, rows) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        const unread = rows ? rows.filter(n => !n.is_read).length : 0;
-        res.json({ notifications: rows || [], unread_count: unread, pagination: { page, limit, total: countRow.total, totalPages: Math.ceil(countRow.total / limit) } });
-      });
-    });
-  } else {
-    db.all("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20", [], (err, rows) => {
-      if (err) return res.status(500).json({ error: "Database error" });
-      const unread = rows ? rows.filter(n => !n.is_read).length : 0;
-      res.json({ notifications: rows || [], unread_count: unread });
-    });
-  }
+  db.all("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+    const unread = rows ? rows.filter(n => !n.is_read).length : 0;
+    res.json({ notifications: rows || [], unread_count: unread });
+  });
 });
 
 router.post("/notifications/read", authenticate, requireAdmin, (req, res) => {
@@ -357,6 +294,19 @@ router.delete("/notifications/old", authenticate, requireAdmin, (req, res) => {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   db.run("DELETE FROM notifications WHERE created_at < ?", [weekAgo]);
   res.json({ success: true });
+});
+
+router.get("/debug/users", (req, res) => {
+  db.all("SELECT id, username, role, created_at FROM users", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({
+      count: rows.length,
+      users: rows,
+      note: "Passwords are hashed and not shown"
+    });
+  });
 });
 
 module.exports = router;

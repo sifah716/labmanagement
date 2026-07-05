@@ -1,53 +1,32 @@
 
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const crypto = require('crypto');
 const { db, hashPassword, isUniqueError } = require('../database/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.get("/", authenticate, requireAdmin, (req, res) => {
-  const search = req.query.search || '';
-
-  let whereClause = '';
-  let params = [];
-  if (search) {
-    whereClause = " WHERE username LIKE ? OR display_name LIKE ?";
-    params = [`%${search}%`, `%${search}%`];
-  }
-
-  if (req.query.page) {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
-    const offset = (page - 1) * limit;
-
-    db.get(`SELECT COUNT(*) as total FROM users${whereClause}`, params, (countErr, countRow) => {
-      if (countErr) return res.status(500).json({ error: "Database error" });
-      db.all(`SELECT id, username, role, display_name, lab, created_at FROM users${whereClause} ORDER BY id ASC LIMIT ? OFFSET ?`, [...params, limit, offset], (err, rows) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        res.json({ data: rows || [], pagination: { page, limit, total: countRow.total, totalPages: Math.ceil(countRow.total / limit) } });
-      });
-    });
-  } else {
-    db.all("SELECT id, username, role, display_name, lab, created_at FROM users ORDER BY id ASC", [], (err, rows) => {
-      if (err) return res.status(500).json({ error: "Database error" });
-      res.json(rows || []);
-    });
-  }
+  db.all("SELECT id, username, role, display_name, lab, created_at FROM users ORDER BY id ASC", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.json(rows || []);
+  });
 });
 
-router.post("/", authenticate, requireAdmin, [
-  body('username').trim().notEmpty().withMessage('Username harus diisi'),
-  body('password').isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
-  body('role').optional().isIn(['admin', 'user']).withMessage('Role tidak valid'),
-  body('display_name').optional().trim(),
-  body('lab').optional().trim()
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.post("/", authenticate, requireAdmin, (req, res) => {
   const { username, password, role, display_name, lab } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username dan password harus diisi" });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password minimal 6 karakter" });
+  }
+  if (role && !['admin', 'user'].includes(role)) {
+    return res.status(400).json({ error: "Role tidak valid" });
+  }
 
   const hashedPassword = hashPassword(password);
   const now = new Date().toISOString();
@@ -68,19 +47,9 @@ router.post("/", authenticate, requireAdmin, [
   );
 });
 
-router.put("/:id", authenticate, requireAdmin, [
-  body('username').optional().trim(),
-  body('password').optional().isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
-  body('role').optional().isIn(['admin', 'user']).withMessage('Role tidak valid'),
-  body('display_name').optional().trim(),
-  body('lab').optional().trim()
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
-  }
+router.put("/:id", authenticate, requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
-  if (!id || isNaN(id) || id <= 0) return res.status(400).json({ error: "ID tidak valid" });
+  if (!id) return res.status(400).json({ error: "ID tidak valid" });
 
   const { username, password, role, display_name, lab } = req.body;
 
@@ -96,10 +65,12 @@ router.put("/:id", authenticate, requireAdmin, [
       params.push(username);
     }
     if (password) {
+      if (password.length < 6) return res.status(400).json({ error: "Password minimal 6 karakter" });
       updates.push("password=?");
       params.push(hashPassword(password));
     }
     if (role !== undefined) {
+      if (!['admin', 'user'].includes(role)) return res.status(400).json({ error: "Role tidak valid" });
       updates.push("role=?");
       params.push(role);
     }
